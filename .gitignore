@@ -82,3 +82,4 @@ modules/
 
 bin/
 bp.*
+*.gpl
