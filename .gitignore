@@ -69,6 +69,11 @@
 *.tvsconfig
 *.dsk
 
+
+# Borland pascal
+bp.*
+*.gpl
+
 # Delphi history and backups
 __history/
 __recovery/
@@ -81,5 +86,3 @@ __recovery/
 modules/
 
 bin/
-bp.*
-*.gpl
