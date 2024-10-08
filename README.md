@@ -1,2 +1,2 @@
-# FontEdit
-MSDOS-based font editor for APL and Veridian projects.
+# AplFontEdit
+Cross-Platform font editor for DOS APL and Veridian projects.
