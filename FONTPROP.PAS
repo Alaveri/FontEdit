@@ -24,8 +24,8 @@ type
     FontHeightEntry: PNumericUpDown;
     FontMaxWidthLabel: PLabel;
     FontMaxWidthEntry: PNumericUpDown;
-    SpacingLabel: PLabel;
-    SpacingEntry: PNumericUpDown;
+    FontSpacingLabel: PLabel;
+    FontSpacingEntry: PNumericUpDown;
     constructor Create(const ATitle: string);
     procedure HandleActionExecute(var AAction: PAction); virtual;
     procedure SetupControls; virtual;
@@ -86,10 +86,10 @@ begin
 
   Inc(yPos, 30);
 
-  SpacingLabel^.SetBounds(rect.X + left, yPos, 100, 20);
-  SpacingLabel^.SetupControls;
-  SpacingEntry^.X := FontMaxWidthEntry^.X;
-  SpacingEntry^.Y := yPos - 2;
+  FontSpacingLabel^.SetBounds(rect.X + left, yPos, 100, 20);
+  FontSpacingLabel^.SetupControls;
+  FontSpacingEntry^.X := FontMaxWidthEntry^.X;
+  FontSpacingEntry^.Y := yPos - 2;
 
 end;
 
@@ -139,12 +139,12 @@ begin
   FontHeightEntry^.SetMinValue(2);
   FontHeightEntry^.SetMaxValue(24);
 
-  SpacingLabel := New(PLabel, CreateText('SpacingLabel', 'Spacing:', @self));
-  SpacingLabel^.AutoSize := true;
-  SpacingEntry := New(PNumericUpDown, CreateParent('SpacingEntry', @self));
-  SpacingEntry^.SetValue(1);
-  SpacingEntry^.SetMinValue(0);
-  SpacingEntry^.SetMaxValue(4);
+  FontSpacingLabel := New(PLabel, CreateText('SpacingLabel', 'Spacing:', @self));
+  FontSpacingLabel^.AutoSize := true;
+  FontSpacingEntry := New(PNumericUpDown, CreateParent('SpacingEntry', @self));
+  FontSpacingEntry^.SetValue(1);
+  FontSpacingEntry^.SetMinValue(0);
+  FontSpacingEntry^.SetMaxValue(4);
 
   VeridianApp^.DrawEnabled := oldDrawEnabled;
 end;
