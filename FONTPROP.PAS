@@ -137,7 +137,7 @@ begin
   FontHeightEntry := New(PNumericUpDown, CreateParent('FontHeightEntry', @self));
   FontHeightEntry^.SetValue(16);
   FontHeightEntry^.SetMinValue(2);
-  FontHeightEntry^.SetMaxValue(24);
+  FontHeightEntry^.SetMaxValue(22);
 
   FontSpacingLabel := New(PLabel, CreateText('SpacingLabel', 'Spacing:', @self));
   FontSpacingLabel^.AutoSize := true;

@@ -8,12 +8,14 @@ uses
   AplTypes,
   Controls,
   GraphDrv,
+  UndoStk,
   Veridian;
 
 type
   PFontGrid = ^TFontGrid;
   PFontGridEvent = ^TFontGridEvent;
   PFontGridEventProc = ^TFontGridEventProc;
+  PFontEditor = ^TFontEditor;
 
   TFontGridEvent = object(TEvent)
   private
@@ -40,6 +42,20 @@ type
     procedure Init; virtual;
     procedure Paint; virtual;
     destructor Free; virtual;
+  end;
+
+  TFontEditor = object(TPanel)
+  private
+  public
+    CurrentFont: PFont;
+    CurrentChar: char;
+    Scale: integer;
+    constructor Create(AFont: PFont; const AID: string; AParent: PControl);
+    destructor Free; virtual;
+    procedure Paint; virtual;
+    procedure Init; virtual;
+    procedure SetupControls; virtual;
+    procedure SetCurrentChar(AChar: char);
   end;
 
 implementation
@@ -79,11 +95,11 @@ var
   rows: integer;
 begin
   inherited SetupControls;
-  Width := CharsPerRow * (CurrentFont^.MaxWidth + 1);
+  Width := CharsPerRow * (CurrentFont^.MaxWidth + 1) + 2 * BorderWidth;
   rows := 256 div CharsPerRow;
   if 256 mod CharsPerRow > 0 then
     Inc(rows);
-  Height := rows * (CurrentFont^.Height + 1);
+  Height := rows * (CurrentFont^.Height + 1) + 2 * BorderWidth;
 end;
 
 procedure TFontGrid.DrawGridLines;
@@ -93,12 +109,12 @@ var
 begin
   GetScreenBounds(drawRect);
   for index := 1 to CharsPerRow - 1 do begin
-    Graph^.VLine(drawRect.X + index * (CurrentFont^.MaxWidth + 1) - 1,
-      drawRect.Y, drawRect.Height);
+    Graph^.VLine(drawRect.X + index * (CurrentFont^.MaxWidth + 1),
+      drawRect.Y + BorderWidth, drawRect.Height - 2 * BorderWidth);
   end;
   for index := 1 to 255 div CharsPerRow do begin
-    Graph^.HLine(drawRect.X, drawRect.Y + index * (CurrentFont^.Height + 1) - 1,
-      drawRect.Width);
+    Graph^.HLine(drawRect.X + BorderWidth, drawRect.Y + index * (CurrentFont^.Height + 1) - 1,
+      drawRect.Width - 2 * BorderWidth);
   end;
 end;
 
@@ -112,7 +128,7 @@ begin
   column := ord(ch) mod CharsPerRow;
   cx := column * (CurrentFont^.MaxWidth + 1);
   cy := row * (CurrentFont^.Height + 1);
-  Graph^.DrawText(drawRect.X + cx, drawRect.Y + cy, ch);
+  Graph^.DrawText(drawRect.X + cx + BorderWidth, drawRect.Y + cy + BorderWidth, ch);
 end;
 
 procedure TFontGrid.Paint;
@@ -120,11 +136,11 @@ var
   ch: char;
 begin
   inherited Paint;
+  if CurrentFont = nil then
+    exit;
   Graph^.SetForeColor(ForeColor);
   Graph^.SetBackColor(BackColor);
   DrawGridLines;
-  if CurrentFont = nil then
-    exit;
   Graph^.State.Font := CurrentFont;
   for ch := #0 to #255 do
     DrawChar(ch);
@@ -156,11 +172,71 @@ begin
   CharsPerRow := 16;
   ForeColor := Desktop^.Colors^.Focused;
   BackColor := Desktop^.Colors^.FocusedBack;
-  BorderStyle := bsNone;
+  BorderStyle := bsSingle;
   OnSelectChar := nil;
 end;
 
 destructor TFontGrid.Free;
+begin
+  inherited Free;
+end;
+
+constructor TFontEditor.Create(AFont: PFont; const AID: string; AParent: PControl);
+begin
+  inherited CreateParent(AID, AParent);
+  CurrentFont := AFont;
+end;
+
+procedure TFontEditor.Paint;
+var
+  xIndex, yIndex: integer;
+  rect, drawRect: TRect;
+begin
+  inherited Paint;
+  if CurrentFont = nil then
+    exit;
+  if not GetVisible then
+    exit;
+  Graph^.State.Font := CurrentFont;
+  Graph^.SetBackColor(ForeColor);
+  GetScreenBounds(rect);
+  rect.Grow(-BorderWidth, -BorderWidth);
+  rect.Translate(BorderWidth, BorderWidth);
+  for yIndex := 0 to CurrentFont^.Height - 1 do begin
+    for xIndex := 0 to CurrentFont^.MaxWidth - 1 do begin
+      if CurrentFont^.PixelSet(CurrentChar, xIndex, yIndex) then begin
+        drawRect.CreateDims(rect.X + xIndex * Scale, rect.Y + yIndex * Scale, Scale, Scale);
+        Graph^.FillRect(drawRect);
+      end;
+    end;
+  end;
+end;
+
+procedure TFontEditor.Init;
+begin
+  inherited Init;
+  CurrentFont := nil;
+  CurrentChar := #0;
+  CanUndo := true;
+  ForeColor := Desktop^.Colors^.Focused;
+  BackColor := Desktop^.Colors^.FocusedBack;
+  Scale := 8;
+end;
+
+procedure TFontEditor.SetupControls;
+begin
+  inherited SetupControls;
+  Width := CurrentFont^.MaxWidth * Scale + 2 * BorderWidth;
+  Height := CurrentFont^.Height * Scale + 2 * BorderWidth;
+end;
+
+procedure TFontEditor.SetCurrentChar(AChar: char);
+begin
+  CurrentChar := AChar;
+  Draw;
+end;
+
+destructor TFontEditor.Free;
 begin
   inherited Free;
 end;

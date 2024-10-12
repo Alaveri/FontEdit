@@ -6,6 +6,7 @@ interface
 uses
   AplObj,
   Lists,
+  FontGrid,
   Veridian,
   Controls,
   Drawing,
@@ -17,6 +18,10 @@ type
   TFontWindow = object(TWindow)
   private
   public
+    FontGrid: PFontGrid;
+    CurrentCharLabel: PLabel;
+    CharAsciiLabel: PLabel;
+    FontEditor: PFontEditor;
     constructor Create(const AId, ATitle: string; AParent: PControl);
     procedure Init; virtual;
     procedure SetupControls; virtual;
@@ -40,6 +45,9 @@ var
   rect: TRect;
 begin
   inherited init;
+  CurrentCharLabel := nil;
+  CharAsciiLabel := nil;
+  FontGrid := nil;
   Desktop^.GetClientRect(rect);
   Width := Graph^.Mode^.Width + 2;
   Height := rect.Height - Desktop^.MenuBar^.Height - Desktop^.StatusBar^.Height + 5;
