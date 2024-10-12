@@ -11,7 +11,7 @@ uses
   MainApp;
 
 begin
-  FontApp := New(PFontApp, Create(gdSVga8, 640, 480, 8));
+  FontApp := New(PFontApp, Create(gdSVgaBgi8, 640, 480, 8));
   FontApp^.Run;
   FreeAndNil(FontApp);
 end.

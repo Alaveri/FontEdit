@@ -30,6 +30,7 @@ type
     procedure InitActions; virtual;
     procedure Init; virtual;
     procedure NewExecute;
+    procedure AboutExecute;
   end;
 
 var
@@ -107,18 +108,27 @@ begin
   FreeAndNil(dialog);
 end;
 
+procedure TFontApp.AboutExecute;
+var
+  dialog: PAboutDialog;
+begin
+  dialog := New(PAboutDialog, Create);
+  dialog^.ShowModal;
+  FreeAndNil(dialog);
+end;
+
 function TFontApp.HandleActionExecute(ASender: PObject; AAction: PAction): boolean;
 begin
   if inherited HandleActionExecute(ASender, AAction) then
     exit;
   case AAction^.ActionId of
     acNew: NewExecute;
+    acAbout: AboutExecute;
 {    acSave: SaveExecute;
     acClose: CloseTabExecute;
     acCloseAll: CloseAllTabsExecute;
     acOpen: OpenExecute;
     acSaveAs: SaveAsExecute;
-    acAbout: AboutExecute;
     acSettings: EditSettingsExecute;}
     acExit: Close;
   end;

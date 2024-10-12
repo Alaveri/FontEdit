@@ -63,6 +63,8 @@ implementation
 uses
   Drawing,
   Common,
+  GraphApp,
+  Palettes,
   Desk;
 
 procedure TFontGridEvent.Init;
@@ -170,8 +172,8 @@ begin
   inherited Init;
   CurrentFont := nil;
   CharsPerRow := 16;
-  ForeColor := Desktop^.Colors^.Focused;
-  BackColor := Desktop^.Colors^.FocusedBack;
+  ForeColor := Graph8^.GetColor8(scWhite, MaxIntensity);
+  BackColor := Graph8^.GetColor8(scCyan, Intensity50);
   BorderStyle := bsSingle;
   OnSelectChar := nil;
 end;
@@ -218,8 +220,8 @@ begin
   CurrentFont := nil;
   CurrentChar := #0;
   CanUndo := true;
-  ForeColor := Desktop^.Colors^.Focused;
-  BackColor := Desktop^.Colors^.FocusedBack;
+  ForeColor := Graph8^.GetColor8(scWhite, MaxIntensity);
+  BackColor := Graph8^.GetColor8(scCyan, Intensity50);
   Scale := 8;
 end;
 

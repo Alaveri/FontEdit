@@ -7,6 +7,8 @@ uses
   Actions,
   GraphDrv,
   AplObj,
+  Controls,
+  Dialogs,
   Veridian;
 
 const
@@ -32,6 +34,24 @@ const
   { Help Actions }
   acAbout = 4000;
 
+  AppVersion = '0.5.0';
+
+type
+  PAboutDialog = ^TAboutDialog;
+
+  TAboutDialog = object(TDialog)
+  private
+  public
+    TitleLabel: PLabel;
+    VersionLabel: PLabel;
+    FreeConLabel: PLabel;
+    FreeXmsLabel: PLabel;
+    Separator: PHorzSeparator;
+    constructor Create;
+    procedure Init; virtual;
+    procedure SetupControls; virtual;
+  end;
+
 procedure DoInitMenus(AApplication: PVeridianApp); far;
 procedure DoInitActions(AActionList: PActionList); far;
 procedure NewFont(AMaxWidth, AMaxHeight: byte; AFontType: TFontFormat); far;
@@ -42,8 +62,9 @@ uses
   MainApp,
   FontWind,
   Common,
-  Controls,
   FontGrid,
+  MemDrv,
+  Drawing,
   KeyDrv,
   Desk;
 
@@ -190,10 +211,7 @@ begin
       NewMenuItem('CopyMenuItem', acCopy);
       NewMenuItem('PasteMenuItem', acPaste);
       NewMenuItem('DeleteMenuItem', acDelete);
-    end;
-
-    menu := MenuBar^.NewMenu('FontMenu', 'Fon&t');
-    with menu^ do begin
+      NewSeparator;
       NewMenuItem('FontPropertiesMenuItem', acFontProperties);
     end;
 
@@ -201,6 +219,87 @@ begin
     with menu^ do begin
       NewMenuItem('AboutMenuItem', acAbout);
     end;
+  end;
+end;
+
+constructor TAboutDialog.Create;
+begin
+  inherited Create('AboutDialog', [mbOk]);
+end;
+
+procedure TAboutDialog.SetupControls;
+var
+  currentY: integer;
+  currentX: integer;
+  labelHeight: integer;
+  rect: TRect;
+begin
+  inherited SetupControls;
+  X := CenterX;
+  Y := CenterY;
+  labelHeight := Font^.Height;
+  GetContentBounds(rect);
+
+  currentX := rect.X;
+  currentY := rect.Y + labelHeight;
+
+  TitleLabel^.SetBounds(currentX, currentY, rect.Width - 1, Font^.Height);
+  Inc(currentY, labelHeight);
+
+  VersionLabel^.SetBounds(currentX, currentY, rect.Width - 1, Font^.Height);
+  Inc(currentY, labelHeight * 2);
+
+  Separator^.SetBounds(currentX, currentY, rect.Width, 1);
+  Inc(currentY, labelHeight);
+
+  FreeConLabel^.SetBounds(currentX, currentY, rect.Width - 1, Font^.Height);
+  Inc(currentY, labelHeight);
+
+  FreeXmsLabel^.SetBounds(currentX, currentY, rect.Width - 1, Font^.Height);
+end;
+
+procedure TAboutDialog.Init;
+begin
+  inherited Init;
+  Width := VeridianApp^.Scale(20);
+  Height := VeridianApp^.Scale(12);
+  SetTitle('About');
+  ButtonAlign := haCenter;
+
+  TitleLabel := New(PLabel, CreateParent('TitleLabel', @self));
+  with TitleLabel^ do begin
+    Font := VeridianApp^.SystemFont;
+    Autosize := false;
+    TextAlign := haCenter;
+    SetText('APL Font Editor');
+  end;
+
+  VersionLabel := New(PLabel, CreateParent('VersionLabel', @self));
+  with VersionLabel^ do begin
+    Font := VeridianApp^.SystemFont;
+    Autosize := false;
+    TextAlign := haCenter;
+    SetText('Version ' + AppVersion);
+  end;
+
+  Separator := New(PHorzSeparator, CreateParent('Separator', @self));
+
+  FreeConLabel := New(PLabel, CreateParent('FreeConLabel', @self));
+  with FreeConLabel^ do begin
+    Font := VeridianApp^.Fonts^.GetItemById('seattle');
+    Margin := 8;
+    Autosize := false;
+    TextAlign := haLeft;
+    SetText('Free Memory: ' + FormatLong(MemAvail) + ' bytes');
+  end;
+
+  FreeXmsLabel := New(PLabel, CreateParent('FreeXmsLabel', @self));
+  with FreeXmsLabel^ do begin
+    Font := VeridianApp^.Fonts^.GetItemById('seattle');
+    Margin := 8;
+    Autosize := false;
+    TextAlign := haLeft;
+    SetText('Free XMS Memory: ' + FormatLong(Memory.XmsMaxAvail) + ' bytes');
   end;
 end;
 
