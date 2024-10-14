@@ -66,6 +66,8 @@ uses
   MemDrv,
   Drawing,
   KeyDrv,
+  StrUtils,
+  GraphApp,
   Desk;
 
 procedure FontGridSelectChar(ASender: PObject; var AEvent: TFontGridEvent); far;
@@ -81,11 +83,62 @@ begin
   window^.FontEditor^.SetCurrentChar(AEvent.Character);
 end;
 
+procedure DrawSampleChar(ALabel: PLabel; AFont: PFont; AChar: char); far;
+var
+  x: integer;
+  currentChar: PChar;
+  index, len: integer;
+  ptr: PChar;
+  rect: TRect;
+begin
+  index := TString.IndexOf(ALabel^.Text, AChar);
+  if index <> -1 then begin
+    x := 0;
+    ptr := ALabel^.Text;
+    if not Assigned(ptr) then
+      exit;
+    ALabel^.StartDrawing;
+    len := 1;
+    while ptr^ <> #0 do begin
+      if ptr^ = AChar then begin
+        x := AFont^.TextWidthAny(ALabel^.Text, len - 1);
+        ALabel^.GetScreenBounds(rect);
+        rect.Width := AFont^.TextWidth(AChar);
+        rect.Translate(x, 1);
+        Graph8^.SetBackColor(ALabel^.BackColor);
+        Graph8^.SetForeColor(ALabel^.ForeColor);
+        Graph8^.FillRect(rect);
+        Graph8^.State.Font := AFont;
+        Graph8^.DrawText(rect.X, rect.Y, AChar);
+      end;
+      Inc(ptr);
+      Inc(len);
+    end;
+
+    ALabel^.EndDrawing;
+  end;
+end;
+
+procedure FontEditorCharacterChanged(ASender: PObject; var AEvent: TFontGridEvent); far;
+var
+  window: PFontWindow;
+  grid: PFontGrid;
+begin
+  window := FontApp^.EditorWindow;
+  grid := window^.FontGrid;
+  grid^.DrawChar(AEvent.Character);
+  DrawSampleChar(window^.SampleLabel1, grid^.CurrentFont, AEvent.Character);
+  DrawSampleChar(window^.SampleLabel2, grid^.CurrentFont, AEvent.Character);
+  DrawSampleChar(window^.SampleLabel3, grid^.CurrentFont, AEvent.Character);
+end;
+
 procedure NewFont(AMaxWidth, AMaxHeight: byte; AFontType: TFontFormat);
+var
+  yPos: integer;
 begin
   FontApp^.EditorWindow := New(PFontWindow, Create('FontEditWindow', 'UNTITLED.FNT', Desktop));
   with FontApp^, EditorWindow^ do begin
-    CurrentFont := CreateFont(AMaxWidth, AMaxHeight, AFontType);
+    {CurrentFont := CreateFont(AMaxWidth, AMaxHeight, AFontType);}
     SetupControls;
 
     FreeAndNil(CurrentFont);
@@ -94,11 +147,11 @@ begin
 
 
     FontGrid := New(PFontGrid, Create(CurrentFont, 'FontGrid', EditorWindow));
-    FontGrid^.CharsPerRow := 16;
+    FontGrid^.CharsPerRow := 32;
     FontGrid^.Width := (CurrentFont^.MaxWidth + 1) * FontGrid^.CharsPerRow + 2 * FontGrid^.BorderWidth;
-    FontGrid^.Height := (CurrentFont^.Height + 1) * 16 + 2 * FontGrid^.BorderWidth;
+    FontGrid^.Height := (CurrentFont^.Height + 1) * (256 div FontGrid^.CharsPerRow) + 2 * FontGrid^.BorderWidth;
     FontGrid^.X := 10;
-    FontGrid^.Y := EditorWindow^.Titlebar^.Height + 10;
+    FontGrid^.Y := Desktop^.MenuBar^.Height + 10;
     FontGrid^.OnSelectChar := @FontGridSelectChar;
     FontGrid^.SetupControls;
 
@@ -111,8 +164,29 @@ begin
     CharAsciiLabel^.Y := CurrentCharLabel^.Y + CurrentCharLabel^.Height + 2;
 
     FontEditor := New(PFontEditor, Create(CurrentFont, 'FontEditor', EditorWindow));
+    FontEditor^.SetupControls;
     FontEditor^.X := FontGrid^.X + FontGrid^.Width + 10;
-    FontEditor^.Y := EditorWindow^.Titlebar^.Height + 10;
+    FontEditor^.Y := Desktop^.MenuBar^.Height + 10;
+    FontEditor^.OnCharacterChanged := @FontEditorCharacterChanged;
+
+    yPos := CharAsciiLabel^.Y + CharAsciiLabel^.Height + 10;
+
+    SampleLabel1 := New(PLabel, CreateText('SampleLabel', 'the quick brown fox jumps over the lazy dog.', EditorWindow));
+    SampleLabel1^.X := FontGrid^.X;
+    SampleLabel1^.Y := yPos;
+    SampleLabel1^.Font := CurrentFont;
+    Inc(yPos, SampleLabel1^.Height + 4);
+
+    SampleLabel2 := New(PLabel, CreateText('SampleLabel', 'THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG.', EditorWindow));
+    SampleLabel2^.X := FontGrid^.X;
+    SampleLabel2^.Y := yPos;
+    SampleLabel2^.Font := CurrentFont;
+    Inc(yPos, SampleLabel2^.Height + 4);
+
+    SampleLabel3 := New(PLabel, CreateText('SampleLabel', '1234567890!@#$%^&*()-_=+;:''",<.>/?`~[{[]]}\|', EditorWindow));
+    SampleLabel3^.X := FontGrid^.X;
+    SampleLabel3^.Y := yPos;
+    SampleLabel3^.Font := CurrentFont;
 
     EditorWindow^.Show;
     EditorWindow^.Activate;

@@ -22,6 +22,9 @@ type
     CurrentCharLabel: PLabel;
     CharAsciiLabel: PLabel;
     FontEditor: PFontEditor;
+    SampleLabel1: PLabel;
+    SampleLabel2: PLabel;
+    SampleLabel3: PLabel;
     constructor Create(const AId, ATitle: string; AParent: PControl);
     procedure Init; virtual;
     procedure SetupControls; virtual;
@@ -48,6 +51,10 @@ begin
   CurrentCharLabel := nil;
   CharAsciiLabel := nil;
   FontGrid := nil;
+  FontEditor := nil;
+  SampleLabel1 := nil;
+  SampleLabel2 := nil;
+  SampleLabel3 := nil;
   Desktop^.GetClientRect(rect);
   Width := Graph^.Mode^.Width + 2;
   Height := rect.Height - Desktop^.MenuBar^.Height - Desktop^.StatusBar^.Height + 5;
