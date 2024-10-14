@@ -68,6 +68,7 @@ uses
   KeyDrv,
   StrUtils,
   GraphApp,
+  Events,
   Desk;
 
 procedure FontGridSelectChar(ASender: PObject; var AEvent: TFontGridEvent); far;
@@ -119,17 +120,37 @@ begin
   end;
 end;
 
-procedure FontEditorCharacterChanged(ASender: PObject; var AEvent: TFontGridEvent); far;
+procedure FontEditorCharacterChanged(ASender: PObject; var AEvent: TFontEditorChangedEvent); far;
 var
   window: PFontWindow;
   grid: PFontGrid;
+  alabel: PLabel;
+  function LabelContainsChar(ALabel: PLabel; AChar: char): boolean;
+  var
+    index: integer;
+  begin
+    index := TString.IndexOf(ALabel^.Text, AChar);
+    LabelContainsChar := index > -1;
+  end;
 begin
   window := FontApp^.EditorWindow;
   grid := window^.FontGrid;
-  grid^.DrawChar(AEvent.Character);
-  DrawSampleChar(window^.SampleLabel1, grid^.CurrentFont, AEvent.Character);
-  DrawSampleChar(window^.SampleLabel2, grid^.CurrentFont, AEvent.Character);
-  DrawSampleChar(window^.SampleLabel3, grid^.CurrentFont, AEvent.Character);
+  if AEvent.NewCharWidth = AEvent.OldCharWidth then begin
+    grid^.DrawChar(AEvent.Character);
+    DrawSampleChar(window^.SampleLabel1, grid^.CurrentFont, AEvent.Character);
+    DrawSampleChar(window^.SampleLabel2, grid^.CurrentFont, AEvent.Character);
+    DrawSampleChar(window^.SampleLabel3, grid^.CurrentFont, AEvent.Character);
+    exit;
+  end;
+  alabel := nil;
+  if LabelContainsChar(window^.SampleLabel1, AEvent.Character) then
+    alabel := window^.SampleLabel1
+  else if LabelContainsChar(window^.SampleLabel2, AEvent.Character) then
+    alabel := window^.SampleLabel2
+  else if LabelContainsChar(window^.SampleLabel3, AEvent.Character) then
+    alabel := window^.SampleLabel3;
+  if Assigned(alabel) then
+    alabel^.SetText(TString.GetString(alabel^.Text));
 end;
 
 procedure NewFont(AMaxWidth, AMaxHeight: byte; AFontType: TFontFormat);
@@ -183,7 +204,7 @@ begin
     SampleLabel2^.Font := CurrentFont;
     Inc(yPos, SampleLabel2^.Height + 4);
 
-    SampleLabel3 := New(PLabel, CreateText('SampleLabel', '1234567890!@#$%^&*()-_=+;:''",<.>/?`~[{[]]}\|', EditorWindow));
+    SampleLabel3 := New(PLabel, CreateText('SampleLabel', '1234567890!@#$%^&*()-_=+;:''",<.>/?`~{[]}\|', EditorWindow));
     SampleLabel3^.X := FontGrid^.X;
     SampleLabel3^.Y := yPos;
     SampleLabel3^.Font := CurrentFont;
