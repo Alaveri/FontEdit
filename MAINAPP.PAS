@@ -25,11 +25,13 @@ type
     CurrentFont: PFont;
     function HandleActionExecute(ASender: PObject; AAction: PAction): boolean; virtual;
     function CreateFont(AMaxWidth, AMaxHeight: byte; AFontType: TFontFormat): PFont;
+    function LastOpenPath: string;
     procedure UpdateActionControl(AControl: PActionControl); virtual;
     procedure InitControls; virtual;
     procedure InitActions; virtual;
     procedure Init; virtual;
     procedure NewExecute;
+    procedure OpenExecute;
     procedure AboutExecute;
   end;
 
@@ -41,6 +43,8 @@ implementation
 uses
   FontProp,
   AplTypes,
+  Dialogs,
+  StrUtils,
   Drawing,
   Desk;
 
@@ -117,17 +121,47 @@ begin
   FreeAndNil(dialog);
 end;
 
+function TFontApp.LastOpenPath: string;
+begin
+  LastOpenPath := IncludeBackslash(AppDir) + '*.fnt';
+end;
+
+procedure TFontApp.OpenExecute;
+var
+  dialog: PFileDialog;
+  result: TModalResult;
+begin
+  dialog := New(PFileDialog, Create('Open Font', LastOpenPath));
+  dialog^.Options := [doFileMustExist];
+  dialog^.DefaultExt := '.fnt';
+  result := dialog^.ShowModal;
+  if result = mrOk then begin
+    {tileset := New(PTileset, LoadFromFile(dialog^.Filename));
+    if not CheckError(tileset) then begin
+      FreeAndNil(tileset);
+      exit;
+    end;}
+    {TString.Assign(TileSettings.LastOpenDir, ExtractDirectory(tileset^.Filename));}
+    {TileSettings.SaveToFile(SettingsFilename);
+    tab := Tabs^.NewTab(ExtractFullName(FirstUpper(tileset^.Filename)));
+    tab^.Data := tileset;
+    Tabs^.Visible := true;
+    Tabs^.Draw;}
+  end;
+  FreeAndNil(dialog);
+end;
+
 function TFontApp.HandleActionExecute(ASender: PObject; AAction: PAction): boolean;
 begin
   if inherited HandleActionExecute(ASender, AAction) then
     exit;
   case AAction^.ActionId of
     acNew: NewExecute;
+    acOpen: OpenExecute;
     acAbout: AboutExecute;
 {    acSave: SaveExecute;
     acClose: CloseTabExecute;
     acCloseAll: CloseAllTabsExecute;
-    acOpen: OpenExecute;
     acSaveAs: SaveAsExecute;
     acSettings: EditSettingsExecute;}
     acExit: Close;

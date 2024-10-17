@@ -160,6 +160,8 @@ begin
   FontApp^.EditorWindow := New(PFontWindow, Create('FontEditWindow', 'UNTITLED.FNT', Desktop));
   with FontApp^, EditorWindow^ do begin
     {CurrentFont := CreateFont(AMaxWidth, AMaxHeight, AFontType);}
+    VeridianApp^.PushState;
+    VeridianApp^.State.DrawEnabled := false;
     SetupControls;
 
     FreeAndNil(CurrentFont);
@@ -168,7 +170,7 @@ begin
 
 
     FontGrid := New(PFontGrid, Create(CurrentFont, 'FontGrid', EditorWindow));
-    FontGrid^.CharsPerRow := 32;
+    FontGrid^.CharsPerRow := 24;
     FontGrid^.Width := (CurrentFont^.MaxWidth + 1) * FontGrid^.CharsPerRow + 2 * FontGrid^.BorderWidth;
     FontGrid^.Height := (CurrentFont^.Height + 1) * (256 div FontGrid^.CharsPerRow) + 2 * FontGrid^.BorderWidth;
     FontGrid^.X := 10;
@@ -192,25 +194,30 @@ begin
 
     yPos := CharAsciiLabel^.Y + CharAsciiLabel^.Height + 10;
 
-    SampleLabel1 := New(PLabel, CreateText('SampleLabel', 'the quick brown fox jumps over the lazy dog.', EditorWindow));
+    SampleLabel1 := New(PLabel, CreateText('SampleLabel',
+      'the quick brown fox jumps over the lazy dog.', EditorWindow));
     SampleLabel1^.X := FontGrid^.X;
     SampleLabel1^.Y := yPos;
     SampleLabel1^.Font := CurrentFont;
     Inc(yPos, SampleLabel1^.Height + 4);
 
-    SampleLabel2 := New(PLabel, CreateText('SampleLabel', 'THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG.', EditorWindow));
+    SampleLabel2 := New(PLabel, CreateText('SampleLabel',
+      'THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG.', EditorWindow));
     SampleLabel2^.X := FontGrid^.X;
     SampleLabel2^.Y := yPos;
     SampleLabel2^.Font := CurrentFont;
     Inc(yPos, SampleLabel2^.Height + 4);
 
-    SampleLabel3 := New(PLabel, CreateText('SampleLabel', '1234567890!@#$%^&*()-_=+;:''",<.>/?`~{[]}\|', EditorWindow));
+    SampleLabel3 := New(PLabel, CreateText('SampleLabel',
+      '1234567890!@#$%^&*()-_=+;:''",<.>/?`~{[]}\|', EditorWindow));
     SampleLabel3^.X := FontGrid^.X;
     SampleLabel3^.Y := yPos;
     SampleLabel3^.Font := CurrentFont;
+    VeridianApp^.PopState;
 
     EditorWindow^.Show;
     EditorWindow^.Activate;
+
   end;
 end;
 
@@ -223,7 +230,7 @@ begin
     action^.SetHelpText('Create a new font file');
     Add(action);
 
-    action := New(PAction, Create(acOpen, '&Open Font...', kyAltO));
+    action := New(PAction, Create(acOpen, '&Open Font...', kyCtrlO));
     action^.SetHelpText('Open an existing font file');
     Add(action);
 

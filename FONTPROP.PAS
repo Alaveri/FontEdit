@@ -27,6 +27,7 @@ type
     FontSpacingLabel: PLabel;
     FontSpacingEntry: PNumericUpDown;
     constructor Create(const ATitle: string);
+    constructor CreateParent(const ATitle: string; AParent: PControl);
     procedure HandleActionExecute(var AAction: PAction); virtual;
     procedure SetupControls; virtual;
     procedure BeforeShow; virtual;
@@ -44,6 +45,12 @@ uses
 constructor TFontPropertiesDialog.Create(const ATitle: string);
 begin
   inherited Create('FontPropertiesDialog', [mbOk, mbCancel]);
+  SetTitle(ATitle);
+end;
+
+constructor TFontPropertiesDialog.CreateParent(const ATitle: string; AParent: PControl);
+begin
+  inherited CreateParent('FontPropertiesDialog', AParent, [mbOk, mbCancel]);
   SetTitle(ATitle);
 end;
 
@@ -108,8 +115,8 @@ var
   oldDrawEnabled: boolean;
 begin
   inherited Init;
-  oldDrawEnabled := VeridianApp^.DrawEnabled;
-  VeridianApp^.DrawEnabled := false;
+  VeridianApp^.PushState;
+  VeridianApp^.State.DrawEnabled := false;
   Width := VeridianApp^.Scale(20);
   Height := VeridianApp^.Scale(12);
   ButtonAlign := haRight;
@@ -146,7 +153,7 @@ begin
   FontSpacingEntry^.SetMinValue(0);
   FontSpacingEntry^.SetMaxValue(4);
 
-  VeridianApp^.DrawEnabled := oldDrawEnabled;
+  VeridianApp^.PopState;
 end;
 
 destructor TFontPropertiesDialog.Free;
