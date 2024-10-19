@@ -170,17 +170,6 @@ begin
   result := dialog^.ShowModal;
   if result = mrOk then begin
     CurrentFont^.SaveToFile(dialog^.Filename);
-    {tileset := New(PTileset, LoadFromFile(dialog^.Filename));
-    if not CheckError(tileset) then begin
-      FreeAndNil(tileset);
-      exit;
-    end;}
-    {TString.Assign(TileSettings.LastOpenDir, ExtractDirectory(tileset^.Filename));}
-    {TileSettings.SaveToFile(SettingsFilename);
-    tab := Tabs^.NewTab(ExtractFullName(FirstUpper(tileset^.Filename)));
-    tab^.Data := tileset;
-    Tabs^.Visible := true;
-    Tabs^.Draw;}
   end;
   FreeAndNil(dialog);
 end;
