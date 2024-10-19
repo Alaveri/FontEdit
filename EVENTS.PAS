@@ -18,7 +18,7 @@ uses
   Drawing,
   GraphApp,
   StrUtils,
-  MainApp;
+  FontAppl;
 
 procedure FontGridSelectChar(ASender: PObject; var AEvent: TFontGridEvent); far;
 var
@@ -85,7 +85,7 @@ begin
   window := FontApp^.EditorWindow;
   grid := window^.FontGrid;
   if AEvent.NewCharWidth = AEvent.OldCharWidth then begin
-    grid^.DrawChar(AEvent.Character);
+    grid^.DrawChar(AEvent.Character, true);
     DrawSampleChar(window^.SampleLabel1, grid^.CurrentFont, AEvent.Character);
     DrawSampleChar(window^.SampleLabel2, grid^.CurrentFont, AEvent.Character);
     DrawSampleChar(window^.SampleLabel3, grid^.CurrentFont, AEvent.Character);

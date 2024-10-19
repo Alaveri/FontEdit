@@ -8,6 +8,7 @@ uses
   Actions,
   AplTypes,
   Controls,
+  VTypes,
   Veridian,
   Combos,
   Dialogs;

@@ -8,6 +8,8 @@ uses
   AplTypes,
   Controls,
   GraphDrv,
+  Math,
+  VTypes,
   Drawing,
   UndoStk,
   Veridian;
@@ -51,7 +53,7 @@ type
     OnSelectChar: PFontGridEventProc;
     LineColor: byte;
     constructor Create(AFont: PFont; const AID: string; AParent: PControl);
-    procedure DrawChar(ch: char);
+    procedure DrawChar(ACH: char; AClear: boolean);
     procedure MouseDown(var AEvent: TMouseEvent); virtual;
     procedure SetupControls; virtual;
     procedure Init; virtual;
@@ -166,20 +168,39 @@ begin
   end;
 end;
 
-procedure TFontGrid.DrawChar(ch: char);
+procedure TFontGrid.DrawChar(ACH: char; AClear: boolean);
 var
   row, column, cx, cy: integer;
   drawRect: TRect;
+  charRect: TRect;
+  buffer: PByte;
 begin
   StartDrawing;
   GetScreenBounds(drawRect);
-  row := ord(ch) div CharsPerRow;
-  column := ord(ch) mod CharsPerRow;
+  row := ord(ACH) div CharsPerRow;
+  column := ord(ACH) mod CharsPerRow;
   cx := column * (CurrentFont^.MaxWidth + 1) + BorderWidth;
   cy := row * (CurrentFont^.Height + 1) + BorderWidth;
   Graph^.State.Font := CurrentFont;
   Graph^.State.ViewPort := drawRect;
-  Graph^.DrawText(drawRect.X + cx, drawRect.Y + cy, ch);
+  Graph^.SetForeColor(ForeColor);
+  Graph^.SetBackColor(BackColor);
+  charRect.CreateDims(drawRect.X + cx, drawRect.Y + cy,
+    CurrentFont^.MaxWidth, CurrentFont^.Height);
+  if AClear then begin
+    Graph^.PushState;
+    Graph^.BeginDrawBuffer(buffer, charRect);
+    Graph^.FillRect(charRect);
+    Graph^.DrawText(charRect.X, charRect.Y, ACH);
+    Graph^.EndDrawBuffer;
+    Graph^.PopState;
+    charRect.Translate(drawRect.X + cx, drawRect.Y + cy);
+    Graph^.DrawImage(drawRect.X + cx, drawRect.Y + cy,
+      CurrentFont^.MaxWidth, CurrentFont^.Height, buffer);
+    FreeMem(buffer, charRect.Width * charRect.Height);
+  end
+  else
+    Graph^.DrawText(drawRect.X + cx, drawRect.Y + cy, ACH);
   EndDrawing;
 end;
 
@@ -194,7 +215,7 @@ var
   Graph^.SetBackColor(BackColor);
   Graph^.State.Font := CurrentFont;
   for ch := #0 to #255 do
-    DrawChar(ch);
+    DrawChar(ch, false);
   Graph^.SetForeColor(LineColor);
   DrawGridLines;
 end;
@@ -209,9 +230,9 @@ begin
     exit;
   index := AEvent.X div (CurrentFont^.MaxWidth + 1) +
     (AEvent.Y div (CurrentFont^.Height + 1)) * CharsPerRow;
-  index := EnsureRange(index, 0, 255);
+  index := Clamp(index, 0, 255);
   ch := char(index);
-  DrawChar(ch);
+  DrawChar(ch, true);
   event.Create;
   event.Character := ch;
   Invoke(OnSelectChar, event);
@@ -339,6 +360,8 @@ var
 begin
   if AEvent.Handled then
     exit;
+  IsLeftMouseDown := bsLeft in AEvent.NewMouseState.ButtonState;
+  IsRightMouseDown := bsRight in AEvent.NewMouseState.ButtonState;
   GetScreenBoundsClipped(rect);
   xIndex := (AEvent.X - BorderWidth) div Scale;
   yIndex := (AEvent.Y - BorderWidth) div Scale;
@@ -374,8 +397,7 @@ var
 begin
   if AEvent.Handled then
     exit;
-  if (AEvent.NewMouseState.ButtonState <> [bsLeft]) and
-    (AEvent.NewMouseState.ButtonState <> [bsRight]) then
+  if not (IsLeftMouseDown or IsRightMouseDown) then
     exit;
   xIndex := (AEvent.X - BorderWidth) div Scale;
   yIndex := (AEvent.Y - BorderWidth) div Scale;
@@ -389,16 +411,12 @@ begin
   event.OldCharWidth := currentFont^.CharWidth(CurrentChar);
   rect.CreateDims(0, 0, CurrentFont^.MaxWidth, CurrentFont^.Height);
   StartDrawingEx(false);
-  if AEvent.NewMouseState.ButtonState = [bsLeft] then begin
-    FButton := bsLeft;
-    LineDraw(FPreviousPixel.X, FPreviousPixel.Y, xIndex, yIndex,
-      rect, @DoSetPixel, @self);
-  end
-  else if AEvent.NewMouseState.ButtonState = [bsRight] then begin
+  if IsLeftMouseDown then
+    FButton := bsLeft
+  else if IsRightMouseDown then
     FButton := bsRight;
-    LineDraw(FPreviousPixel.X, FPreviousPixel.Y, xIndex, yIndex,
-      rect, @DoSetPixel, @self);
-  end;
+  LineDraw(FPreviousPixel.X, FPreviousPixel.Y, xIndex, yIndex,
+    rect, @DoSetPixel, @self);
   EndDrawing;
   currentFont^.SetCharWidths;
   event.NewCharWidth := currentFont^.CharWidth(CurrentChar);
@@ -409,6 +427,8 @@ end;
 
 procedure TFontEditor.MouseUp(var AEvent: TMouseEvent);
 begin
+  IsLeftMouseDown := false;
+  IsRightMouseDown := false;
   if AEvent.Handled then
     exit;
   inherited MouseUp(AEvent);

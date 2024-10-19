@@ -8,7 +8,9 @@ uses
   GraphDrv,
   AplObj,
   Controls,
+  AplImage,
   Dialogs,
+  VTypes,
   Veridian;
 
 const
@@ -54,12 +56,12 @@ type
 
 procedure DoInitMenus(AApplication: PVeridianApp); far;
 procedure DoInitActions(AActionList: PActionList); far;
-procedure NewFont(AMaxWidth, AMaxHeight: byte; AFontType: TFontFormat); far;
+procedure NewFont(AFont: PFont; AMaxWidth, AMaxHeight: byte; AFontType: TFontFormat); far;
 
 implementation
 
 uses
-  MainApp,
+  FontAppl,
   FontWind,
   Common,
   FontGrid,
@@ -135,8 +137,8 @@ var
 begin
   window := FontApp^.EditorWindow;
   grid := window^.FontGrid;
+  grid^.DrawChar(AEvent.Character, true);
   if AEvent.NewCharWidth = AEvent.OldCharWidth then begin
-    grid^.DrawChar(AEvent.Character);
     DrawSampleChar(window^.SampleLabel1, grid^.CurrentFont, AEvent.Character);
     DrawSampleChar(window^.SampleLabel2, grid^.CurrentFont, AEvent.Character);
     DrawSampleChar(window^.SampleLabel3, grid^.CurrentFont, AEvent.Character);
@@ -153,21 +155,19 @@ begin
     alabel^.SetText(TString.GetString(alabel^.Text));
 end;
 
-procedure NewFont(AMaxWidth, AMaxHeight: byte; AFontType: TFontFormat);
+procedure NewFont(AFont: PFont; AMaxWidth, AMaxHeight: byte; AFontType: TFontFormat);
 var
   yPos: integer;
 begin
   FontApp^.EditorWindow := New(PFontWindow, Create('FontEditWindow', 'UNTITLED.FNT', Desktop));
   with FontApp^, EditorWindow^ do begin
-    {CurrentFont := CreateFont(AMaxWidth, AMaxHeight, AFontType);}
+    if Assigned(AFont) then
+      CurrentFont := AFont
+    else
+      CurrentFont := CreateFont(AMaxWidth, AMaxHeight, AFontType);
     VeridianApp^.PushState;
     VeridianApp^.State.DrawEnabled := false;
     SetupControls;
-
-    FreeAndNil(CurrentFont);
-    CurrentFont := New(PProportionalFont, CreateLoadFile('System.fnt'));
-
-
 
     FontGrid := New(PFontGrid, Create(CurrentFont, 'FontGrid', EditorWindow));
     FontGrid^.CharsPerRow := 24;

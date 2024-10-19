@@ -1,5 +1,5 @@
 {$I COMPILER.INC}
-unit MainApp;
+unit FontAppl;
 
 interface
 
@@ -12,6 +12,7 @@ uses
   Errors,
   Controls,
   FontInit,
+  FontType,
   FontWind,
   FontGrid;
 
@@ -20,6 +21,7 @@ type
 
   TFontApp = object(TVeridianApp)
   private
+    AppSettings: TFontSettings;
   public
     EditorWindow: PFontWindow;
     CurrentFont: PFont;
@@ -32,6 +34,8 @@ type
     procedure Init; virtual;
     procedure NewExecute;
     procedure OpenExecute;
+    procedure SaveExecute;
+    procedure SaveAsExecute;
     procedure AboutExecute;
   end;
 
@@ -54,6 +58,8 @@ begin
   inherited Init;
   CurrentFont := nil;
   EditorWindow := nil;
+  AppSettings.LoadFromFile(SettingsFilename);
+  AppSettings.ClearException;
 end;
 
 procedure TFontApp.InitActions;
@@ -107,7 +113,7 @@ begin
     height := dialog^.FontHeightEntry^.Value;
     fontType := TFontFormat(dialog^.FontTypeEntry^.SelectedItem^.Tag);
     spacing := dialog^.FontSpacingEntry^.Value;
-    NewFont(maxWidth, height, fontType);
+    NewFont(nil, maxWidth, height, fontType);
   end;
   FreeAndNil(dialog);
 end;
@@ -136,6 +142,34 @@ begin
   dialog^.DefaultExt := '.fnt';
   result := dialog^.ShowModal;
   if result = mrOk then begin
+    FreeAndNil(CurrentFont);
+    CurrentFont := New(PProportionalFont, CreateLoadFile(dialog^.Filename));
+    if not CheckError(CurrentFont) then begin
+      FreeAndNil(CurrentFont);
+      exit;
+    end;
+    NewFont(CurrentFont, CurrentFont^.MaxWidth, CurrentFont^.Height, ffProportional);
+    TString.Assign(AppSettings.LastOpenDir, ExtractDirectory(dialog^.Filename));
+    AppSettings.SaveToFile(SettingsFilename);
+  end;
+  FreeAndNil(dialog);
+end;
+
+procedure TFontApp.SaveAsExecute;
+begin
+end;
+
+procedure TFontApp.SaveExecute;
+var
+  dialog: PFileDialog;
+  result: TModalResult;
+begin
+  dialog := New(PFileDialog, Create('Save Font', LastOpenPath));
+  dialog^.Options := [doOverwritePrompt];
+  dialog^.DefaultExt := '.fnt';
+  result := dialog^.ShowModal;
+  if result = mrOk then begin
+    CurrentFont^.SaveToFile(dialog^.Filename);
     {tileset := New(PTileset, LoadFromFile(dialog^.Filename));
     if not CheckError(tileset) then begin
       FreeAndNil(tileset);
@@ -159,10 +193,10 @@ begin
     acNew: NewExecute;
     acOpen: OpenExecute;
     acAbout: AboutExecute;
-{    acSave: SaveExecute;
-    acClose: CloseTabExecute;
-    acCloseAll: CloseAllTabsExecute;
+    acSave: SaveExecute;
     acSaveAs: SaveAsExecute;
+{    acClose: CloseTabExecute;
+    acCloseAll: CloseAllTabsExecute;
     acSettings: EditSettingsExecute;}
     acExit: Close;
   end;

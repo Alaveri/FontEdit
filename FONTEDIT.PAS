@@ -8,7 +8,7 @@ uses
   GraphApp,
   GraphIni,
   Veridian,
-  MainApp;
+  FontAppl;
 
 begin
   FontApp := New(PFontApp, Create(gdSVga8, 640, 480, 8));
