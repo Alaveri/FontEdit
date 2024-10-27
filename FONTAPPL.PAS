@@ -50,6 +50,7 @@ uses
   Dialogs,
   StrUtils,
   Drawing,
+  AplImage,
   Desk;
 
 procedure TFontApp.Init;
@@ -136,23 +137,25 @@ procedure TFontApp.OpenExecute;
 var
   dialog: PFileDialog;
   result: TModalResult;
+  filename: string;
 begin
   dialog := New(PFileDialog, Create('Open Font', LastOpenPath));
   dialog^.Options := [doFileMustExist];
   dialog^.DefaultExt := '.fnt';
   result := dialog^.ShowModal;
+  filename := dialog^.Filename;
+  FreeAndNil(dialog);
   if result = mrOk then begin
     FreeAndNil(CurrentFont);
-    CurrentFont := New(PProportionalFont, CreateLoadFile(dialog^.Filename));
+    CurrentFont := New(PProportionalFont, CreateLoadFile(filename));
     if not CheckError(CurrentFont) then begin
       FreeAndNil(CurrentFont);
       exit;
     end;
     NewFont(CurrentFont, CurrentFont^.MaxWidth, CurrentFont^.Height, ffProportional);
-    TString.Assign(AppSettings.LastOpenDir, ExtractDirectory(dialog^.Filename));
+    TString.Assign(AppSettings.LastOpenDir, ExtractDirectory(filename));
     AppSettings.SaveToFile(SettingsFilename);
   end;
-  FreeAndNil(dialog);
 end;
 
 procedure TFontApp.SaveAsExecute;

@@ -181,8 +181,8 @@ begin
   column := ord(ACH) mod CharsPerRow;
   cx := column * (CurrentFont^.MaxWidth + 1) + BorderWidth;
   cy := row * (CurrentFont^.Height + 1) + BorderWidth;
-  Graph^.State.Font := CurrentFont;
-  Graph^.State.ViewPort := drawRect;
+  Graph^.State^.Font := CurrentFont;
+  Graph^.State^.ViewPort := drawRect;
   Graph^.SetForeColor(ForeColor);
   Graph^.SetBackColor(BackColor);
   charRect.CreateDims(drawRect.X + cx, drawRect.Y + cy,
@@ -213,7 +213,7 @@ var
     exit;
   Graph^.SetForeColor(ForeColor);
   Graph^.SetBackColor(BackColor);
-  Graph^.State.Font := CurrentFont;
+  Graph^.State^.Font := CurrentFont;
   for ch := #0 to #255 do
     DrawChar(ch, false);
   Graph^.SetForeColor(LineColor);
@@ -270,7 +270,7 @@ begin
     exit;
   if not GetVisible then
     exit;
-  Graph^.State.Font := CurrentFont;
+  Graph^.State^.Font := CurrentFont;
   if APixelOn then
     Graph^.SetBackColor(ForeColor)
   else
@@ -294,7 +294,7 @@ begin
     exit;
   if not GetVisible then
     exit;
-  Graph^.State.Font := CurrentFont;
+  Graph^.State^.Font := CurrentFont;
   Graph^.SetBackColor(ForeColor);
   for yIndex := 0 to CurrentFont^.Height - 1 do begin
     for xIndex := 0 to CurrentFont^.MaxWidth - 1 do begin

@@ -58,7 +58,7 @@ begin
         Graph8^.SetBackColor(ALabel^.BackColor);
         Graph8^.SetForeColor(ALabel^.ForeColor);
         Graph8^.FillRect(rect);
-        Graph8^.State.Font := AFont;
+        Graph8^.State^.Font := AFont;
         Graph8^.DrawText(rect.X, rect.Y, AChar);
       end;
       Inc(ptr);
