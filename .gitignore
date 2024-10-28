@@ -69,6 +69,11 @@
 *.tvsconfig
 *.dsk
 
+
+# Borland pascal
+bp.*
+*.gpl
+
 # Delphi history and backups
 __history/
 __recovery/
@@ -79,3 +84,6 @@ __recovery/
 
 # Boss dependency manager vendor folder https://github.com/HashLoad/boss
 modules/
+
+bin/
+FONTEDIT.TFA
