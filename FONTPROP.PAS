@@ -129,6 +129,7 @@ begin
   FontTypeEntry^.Items^.AddItemTag('Proportional', byte(ffProportional));
   FontTypeEntry^.Items^.AddItemTag('Monospace', byte(ffMonospace));
   FontTypeEntry^.Items^.AddItemTag('Colored Proportional', byte(ffColored));
+  FontTypeEntry^.Items^.AddItemTag('System', byte(ffSystem));
   FontTypeEntry^.SetSelectedIndex(0);
 
   FontMaxWidthLabel := New(PLabel, CreateText('FontMaxWidthLabel', 'Max Width:', @self));

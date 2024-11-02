@@ -33,6 +33,7 @@ type
     procedure InitActions; virtual;
     procedure Init; virtual;
     procedure NewExecute;
+    procedure NewSystemExecute;
     procedure OpenExecute;
     procedure SaveExecute;
     procedure SaveAsExecute;
@@ -97,10 +98,30 @@ begin
     ffProportional: CreateFont := New(PProportionalFont, CreateSize(AMaxWidth, AMaxHeight));
     ffMonospace: CreateFont := New(PMonospaceFont, Create);
     ffColored: CreateFont := New(PColoredFont, CreateSize(AMaxWidth, AMaxHeight));
+    ffSystem: CreateFont := New(PSystemFont, CreateSize(AMaxWidth, AMaxHeight));
   end;
 end;
 
 procedure TFontApp.NewExecute;
+var
+  dialog: PFontPropertiesDialog;
+  result: TModalResult;
+  maxWidth, height, spacing: byte;
+  fontType: TFontFormat;
+begin
+  dialog := New(PFontPropertiesDialog, Create('New Font'));
+  result := dialog^.ShowModal;
+  if result = mrOk then begin
+    maxWidth := dialog^.FontMaxWidthEntry^.Value;
+    height := dialog^.FontHeightEntry^.Value;
+    fontType := TFontFormat(dialog^.FontTypeEntry^.SelectedItem^.Tag);
+    NewFont(nil, maxWidth, height, fontType);
+    CurrentFont^.Spacing  := dialog^.FontSpacingEntry^.Value;
+  end;
+  FreeAndNil(dialog);
+end;
+
+procedure TFontApp.NewSystemExecute;
 var
   dialog: PFontPropertiesDialog;
   result: TModalResult;
@@ -183,6 +204,7 @@ begin
     exit;
   case AAction^.ActionId of
     acNew: NewExecute;
+    acNewSystem: NewSystemExecute;
     acOpen: OpenExecute;
     acAbout: AboutExecute;
     acSave: SaveExecute;

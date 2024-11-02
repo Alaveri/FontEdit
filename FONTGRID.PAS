@@ -189,6 +189,7 @@ begin
     CurrentFont^.MaxWidth, CurrentFont^.Height);
   if AClear then begin
     Graph^.PushState;
+    buffer := nil;
     Graph^.BeginDrawBuffer(buffer, charRect);
     Graph^.FillRect(charRect);
     Graph^.DrawText(charRect.X, charRect.Y, ACH);
@@ -299,7 +300,6 @@ begin
   for yIndex := 0 to CurrentFont^.Height - 1 do begin
     for xIndex := 0 to CurrentFont^.MaxWidth - 1 do begin
       if CurrentFont^.IsPixelSet(CurrentChar, xIndex, yIndex) then begin
-        CurrentFont^.SetPixel(CurrentChar, xIndex, yIndex);
         PaintPixel(xIndex, yIndex, true);
       end;
     end;

@@ -16,6 +16,7 @@ uses
 const
   { File Actions }
   acNew = 1000;
+  acNewSystem = 1006;
   acOpen = 1001;
   acSave = 1002;
   acSaveAs = 1003;
