@@ -5,11 +5,11 @@ interface
 
 uses
   AplObj,
-  Lists,
+  AplLists,
   FontGrid,
   Veridian,
   Controls,
-  Drawing,
+  AplDraw,
   Views;
 
 type
@@ -34,7 +34,7 @@ type
 implementation
 
 uses
-  GraphDrv,
+  AplGraph,
   Desk;
 
 constructor TFontWindow.Create(const AId, ATitle: string; AParent: PControl);

@@ -12,12 +12,12 @@ implementation
 
 uses
   FontWind,
-  Common,
+  AplUtils,
   Controls,
-  GraphDrv,
-  Drawing,
-  GraphApp,
-  StrUtils,
+  AplGraph,
+  AplDraw,
+  AplGrApp,
+  AplStr,
   FontAppl;
 
 procedure FontGridSelectChar(ASender: PObject; var AEvent: TFontGridEvent); far;

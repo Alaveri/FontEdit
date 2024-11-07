@@ -4,11 +4,11 @@ unit FontInit;
 interface
 
 uses
-  Actions,
-  GraphDrv,
+  AplAct,
+  AplGraph,
   AplObj,
-  Controls,
   AplImage,
+  Controls,
   Dialogs,
   VTypes,
   Veridian;
@@ -16,7 +16,6 @@ uses
 const
   { File Actions }
   acNew = 1000;
-  acNewSystem = 1006;
   acOpen = 1001;
   acSave = 1002;
   acSaveAs = 1003;
@@ -64,13 +63,13 @@ implementation
 uses
   FontAppl,
   FontWind,
-  Common,
+  AplUtils,
   FontGrid,
-  MemDrv,
-  Drawing,
-  KeyDrv,
-  StrUtils,
-  GraphApp,
+  AplMem,
+  AplDraw,
+  AplKeys,
+  AplStr,
+  AplGrap8,
   Events,
   Desk;
 
@@ -108,7 +107,7 @@ begin
         x := AFont^.TextWidthAny(ALabel^.Text, len - 1);
         ALabel^.GetScreenBounds(rect);
         rect.Width := AFont^.TextWidth(AChar);
-        rect.Translate(x, 1);
+        rect.Translate(x, 0);
         Graph8^.SetBackColor(ALabel^.BackColor);
         Graph8^.SetForeColor(ALabel^.ForeColor);
         Graph8^.FillRect(rect);
@@ -203,7 +202,7 @@ begin
     Inc(yPos, SampleLabel1^.Height + 4);
 
     SampleLabel2 := New(PLabel, CreateText('SampleLabel',
-      'THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG.', EditorWindow));
+      'THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG.'#202#203#190#205'X'#191, EditorWindow));
     SampleLabel2^.X := FontGrid^.X;
     SampleLabel2^.Y := yPos;
     SampleLabel2^.Font := CurrentFont;

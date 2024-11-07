@@ -5,8 +5,8 @@ program FontEdit;
 uses
   AplObj,
   AplApps,
-  GraphApp,
-  GraphIni,
+  AplGraph,
+  AplGrIni,
   Veridian,
   FontAppl;
 

@@ -7,11 +7,11 @@ uses
   AplObj,
   AplTypes,
   Controls,
-  GraphDrv,
-  Math,
+  AplGraph,
+  AplMath,
   VTypes,
-  Drawing,
-  UndoStk,
+  AplDraw,
+  AplUndo,
   Veridian;
 
 type
@@ -85,9 +85,8 @@ type
 implementation
 
 uses
-  Common,
-  GraphApp,
-  Palettes,
+  AplUtils,
+  AplPal,
   Desk;
 
 procedure TFontGridEvent.Init;
@@ -195,9 +194,8 @@ begin
     Graph^.DrawText(charRect.X, charRect.Y, ACH);
     Graph^.EndDrawBuffer;
     Graph^.PopState;
-    charRect.Translate(drawRect.X + cx, drawRect.Y + cy);
     Graph^.DrawImage(drawRect.X + cx, drawRect.Y + cy,
-      CurrentFont^.MaxWidth, CurrentFont^.Height, buffer);
+      charRect.Width, charRect.Height, buffer);
     FreeMem(buffer, charRect.Width * charRect.Height);
   end
   else
@@ -233,7 +231,6 @@ begin
     (AEvent.Y div (CurrentFont^.Height + 1)) * CharsPerRow;
   index := Clamp(index, 0, 255);
   ch := char(index);
-  DrawChar(ch, true);
   event.Create;
   event.Character := ch;
   Invoke(OnSelectChar, event);

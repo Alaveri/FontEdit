@@ -5,11 +5,10 @@ interface
 
 uses
   AplObj,
-  GraphDrv,
+  AplGraph,
+  AplUtils,
+  AplAct,
   Veridian,
-  Common,
-  Actions,
-  Errors,
   Controls,
   FontInit,
   FontType,
@@ -33,7 +32,6 @@ type
     procedure InitActions; virtual;
     procedure Init; virtual;
     procedure NewExecute;
-    procedure NewSystemExecute;
     procedure OpenExecute;
     procedure SaveExecute;
     procedure SaveAsExecute;
@@ -49,8 +47,8 @@ uses
   FontProp,
   AplTypes,
   Dialogs,
-  StrUtils,
-  Drawing,
+  AplStr,
+  AplDraw,
   AplImage,
   Desk;
 
@@ -121,25 +119,6 @@ begin
   FreeAndNil(dialog);
 end;
 
-procedure TFontApp.NewSystemExecute;
-var
-  dialog: PFontPropertiesDialog;
-  result: TModalResult;
-  maxWidth, height, spacing: byte;
-  fontType: TFontFormat;
-begin
-  dialog := New(PFontPropertiesDialog, Create('New Font'));
-  result := dialog^.ShowModal;
-  if result = mrOk then begin
-    maxWidth := dialog^.FontMaxWidthEntry^.Value;
-    height := dialog^.FontHeightEntry^.Value;
-    fontType := TFontFormat(dialog^.FontTypeEntry^.SelectedItem^.Tag);
-    spacing := dialog^.FontSpacingEntry^.Value;
-    NewFont(nil, maxWidth, height, fontType);
-  end;
-  FreeAndNil(dialog);
-end;
-
 procedure TFontApp.AboutExecute;
 var
   dialog: PAboutDialog;
@@ -168,13 +147,13 @@ begin
   FreeAndNil(dialog);
   if result = mrOk then begin
     FreeAndNil(CurrentFont);
-    CurrentFont := New(PProportionalFont, CreateLoadFile(filename));
+    CurrentFont := New(PSystemFont, CreateLoadFile(filename));
     if not CheckError(CurrentFont) then begin
       FreeAndNil(CurrentFont);
       exit;
     end;
     NewFont(CurrentFont, CurrentFont^.MaxWidth, CurrentFont^.Height, ffProportional);
-    TString.Assign(AppSettings.LastOpenDir, ExtractDirectory(filename));
+    TString.AssignString(AppSettings.LastOpenDir, ExtractDirectory(filename));
     AppSettings.SaveToFile(SettingsFilename);
   end;
 end;
@@ -204,7 +183,6 @@ begin
     exit;
   case AAction^.ActionId of
     acNew: NewExecute;
-    acNewSystem: NewSystemExecute;
     acOpen: OpenExecute;
     acAbout: AboutExecute;
     acSave: SaveExecute;

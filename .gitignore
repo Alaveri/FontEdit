@@ -87,6 +87,4 @@ modules/
 
 bin/
 FONTEDIT.TFA
-*.PAL
-*.APG
-s
+*.apg

@@ -5,8 +5,8 @@ interface
 
 uses
   AplObj,
-  Errors,
-  Streams;
+  AplConst,
+  AplStrms;
 
 const
   AppVersion = '0.1.0';
@@ -34,9 +34,9 @@ implementation
 
 
 uses
-  Common,
+  AplUtils,
   Veridian,
-  StrUtils;
+  AplStr;
 
 function SettingsFilename: string;
 begin
@@ -81,7 +81,7 @@ var
 begin
   inherited Create;
   stream := New(PFileStream, Create(AFilename, fmRead));
-  if IsNilPtr(stream, ecNotEnoughMemory) then
+  if NilPtr(stream, ecNotEnoughMemory) then
     exit;
   if FileExists(AFilename) then begin
     LoadFromStream(stream);
@@ -97,7 +97,7 @@ var
   stream: PFileStream;
 begin
   stream := New(PFileStream, Create(AFilename, fmWrite));
-  if IsNilPtr(stream, ecNotEnoughMemory) then
+  if NilPtr(stream, ecNotEnoughMemory) then
     exit;
   SaveToStream(stream);
   CheckReraise(stream);
