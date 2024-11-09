@@ -7,11 +7,11 @@ uses
   AplObj,
   AplTypes,
   Controls,
-  AplGraph,
+  Graphics,
   AplMath,
   VTypes,
-  AplDraw,
-  AplUndo,
+  Drawing,
+  Undo,
   Veridian;
 
 type
@@ -86,7 +86,7 @@ implementation
 
 uses
   AplUtils,
-  AplPal,
+  Palettes,
   Desk;
 
 procedure TFontGridEvent.Init;

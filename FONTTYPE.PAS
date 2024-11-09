@@ -6,7 +6,7 @@ interface
 uses
   AplObj,
   AplConst,
-  AplStrms;
+  Streams;
 
 const
   AppVersion = '0.1.0';

@@ -5,9 +5,9 @@ interface
 
 uses
   AplObj,
-  AplGraph,
+  Graphics,
   AplUtils,
-  AplAct,
+  Actions,
   Veridian,
   Controls,
   FontInit,
@@ -48,7 +48,7 @@ uses
   AplTypes,
   Dialogs,
   AplStr,
-  AplDraw,
+  Drawing,
   AplImage,
   Desk;
 

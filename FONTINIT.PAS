@@ -4,8 +4,8 @@ unit FontInit;
 interface
 
 uses
-  AplAct,
-  AplGraph,
+  Actions,
+  Graphics,
   AplObj,
   AplImage,
   Controls,
@@ -65,11 +65,11 @@ uses
   FontWind,
   AplUtils,
   FontGrid,
-  AplMem,
-  AplDraw,
-  AplKeys,
+  MemDrv,
+  Drawing,
+  KeyDrv,
   AplStr,
-  AplGrap8,
+  GrDrv8,
   Events,
   Desk;
 

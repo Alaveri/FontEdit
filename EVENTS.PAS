@@ -14,9 +14,9 @@ uses
   FontWind,
   AplUtils,
   Controls,
-  AplGraph,
-  AplDraw,
-  AplGrApp,
+  Graphics,
+  GrDrv8,
+  Drawing,
   AplStr,
   FontAppl;
 

@@ -5,7 +5,7 @@ interface
 
 uses
   AplObj,
-  AplAct,
+  Actions,
   AplTypes,
   Controls,
   VTypes,
@@ -40,8 +40,8 @@ type
 implementation
 
 uses
-  AplGraph,
-  AplDraw;
+  Graphics,
+  Drawing;
 
 constructor TFontPropertiesDialog.Create(const ATitle: string);
 begin
