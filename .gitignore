@@ -88,3 +88,4 @@ modules/
 bin/
 FONTEDIT.TFA
 *.apg
+.DS_Store
