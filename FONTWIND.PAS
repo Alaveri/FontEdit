@@ -5,11 +5,13 @@ interface
 
 uses
   AplObj,
-  AplLists,
-  FontGrid,
-  Veridian,
+  AplTypes,
+  AplConst,
   Controls,
-  AplDraw,
+  Drawing,
+  Graphics,
+  FontGrid,
+  FontType,
   Views;
 
 type
@@ -18,59 +20,47 @@ type
   TFontWindow = object(TWindow)
   private
   public
-    FontGrid: PFontGrid;
-    CurrentCharLabel: PLabel;
-    CharAsciiLabel: PLabel;
-    FontEditor: PFontEditor;
-    SampleLabel1: PLabel;
-    SampleLabel2: PLabel;
-    SampleLabel3: PLabel;
-    constructor Create(const AId, ATitle: string; AParent: PControl);
-    procedure Init; virtual;
-    procedure SetupControls; virtual;
+    Grid: PFontGrid;
+    CurrentFont: PFont;
+    constructor Create(const AId, ATitle: string; AFont: PFont);
     destructor Free; virtual;
+    procedure Init; virtual;
+    procedure Initialized; virtual;
+    procedure Layout(ARect: TRect); virtual;
   end;
 
 implementation
 
-uses
-  AplGraph,
-  Desk;
-
-constructor TFontWindow.Create(const AId, ATitle: string; AParent: PControl);
+constructor TFontWindow.Create(const AId, ATitle: string; AFont: PFont);
 begin
-  inherited CreateParent(AId, AParent);
-  SetTitle(ATitle);
-end;
-
-procedure TFontWindow.Init;
-var
-  rect: TRect;
-begin
-  inherited init;
-  CurrentCharLabel := nil;
-  CharAsciiLabel := nil;
-  FontGrid := nil;
-  FontEditor := nil;
-  SampleLabel1 := nil;
-  SampleLabel2 := nil;
-  SampleLabel3 := nil;
-  Desktop^.GetClientRect(rect);
-  Width := Graph^.Mode^.Width + 2;
-  Height := rect.Height - Desktop^.MenuBar^.Height - Desktop^.StatusBar^.Height + 5;
-  X := -1;
-  Y := Desktop^.MenuBar^.Height - 1;
-end;
-
-procedure TFontWindow.SetupControls;
-begin
-  inherited SetupControls;
+  inherited Create(AId, ATitle, Desktop);
+  CurrentFont := AFont;
 end;
 
 destructor TFontWindow.Free;
 begin
+  FreeAndNil(CurrentFont);
   inherited Free;
 end;
 
+procedure TFontWindow.Init;
 begin
+  Inherited Init;
+  InitialLocation := wpDefault;
+  Width := ScaleX(60);
+  Height := ScaleY(70);
+
+{  Grid := New(PFontGrid, Create(}
+end;
+
+procedure TFontWindow.Initialized;
+begin
+  inherited Initialized;
+end;
+
+procedure TFontWindow.Layout(ARect: TRect);
+begin
+  inherited Layout(ARect);
+end;
+
 end.

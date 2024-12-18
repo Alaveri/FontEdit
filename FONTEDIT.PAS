@@ -1,17 +1,22 @@
 {$I COMPILER.INC}
-{$M 8192, 0, 655360}
+{$M 16384, 0, 655360}
 program FontEdit;
 
 uses
+  GraphIni,
+  AplConst,
   AplObj,
-  AplApps,
-  AplGraph,
-  AplGrIni,
-  Veridian,
-  FontAppl;
+  FontApp;
 
 begin
-  FontApp := New(PFontApp, Create(gdSVga8, 640, 480, 8));
-  FontApp^.Run;
-  FreeAndNil(FontApp);
+  FontApplication := New(PFontApplication, Create(gdSVga8, 640, 480, 8));
+  if not Assigned(FontApplication) then begin
+    WriteLn('Not enough memory.');
+    exit;
+  end;
+  if not FontApplication^.HasException then
+    FontApplication^.Run
+  else
+    WriteLn(ErrorMessage(FontApplication^.Exception^.Code));
+  FreeAndNil(FontApplication);
 end.
