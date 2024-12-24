@@ -122,7 +122,6 @@ var
   result: TModalResult;
   font: PFont;
 begin
-  TString.Free(AppSettings.LastOpenDir);
   dialog.Create('OpenFontDialog', 'Open Font');
   with dialog do begin
     SetInitialPath(TString.GetString(AppSettings.LastOpenDir) + '*.fnt');
@@ -214,7 +213,9 @@ begin
   case AAction^.ActionId of
     acNew: NewFont;
     acOpen: OpenFont;
-    acSave: ;
+    acSave: begin
+
+    end;
     acSaveAs: ;
     acClose: ;
     acExit: Close;

@@ -39,7 +39,7 @@ type
     function Execute(var AProperties: PFontProperties): TModalResult; virtual;
     function CanExecute(AActionId: word): boolean; virtual;
     procedure Init; virtual;
-    procedure Layout(ARect: TRect); virtual;
+    procedure LayoutRect(ARect: TRect); virtual;
     procedure Paint(ARect: TRect); virtual;
     procedure AfterShow; virtual;
   end;
@@ -119,13 +119,13 @@ begin
   VeridianApp^.PopState;
 end;
 
-procedure TNewFontDialog.Layout(ARect: TRect);
+procedure TNewFontDialog.LayoutRect(ARect: TRect);
 var
   xPos, yPos: integer;
   entryHeight: integer;
   numEntryX: integer;
 begin
-  inherited Layout(ARect);
+  inherited LayoutRect(ARect);
   xPos := 0;
   yPos := 3;
   entryHeight := FontIdLabel^.Font^.Height + 6;

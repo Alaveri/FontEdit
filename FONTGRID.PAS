@@ -50,7 +50,7 @@ type
     constructor Create(AFont: PFont; const AID: string; AParent: PControl);
     procedure DrawChar(ARect: TRect; ACH: char; AClear: boolean);
     procedure MouseDown(var AEvent: TMouseEvent); virtual;
-    procedure Layout(ARect: TRect); virtual;
+    procedure LayoutRect(ARect: TRect); virtual;
     procedure Init; virtual;
     procedure Paint(ARect: TRect); virtual;
     destructor Free; virtual;
@@ -63,13 +63,13 @@ type
   public
     CurrentFont: PFont;
     CurrentChar: char;
-    Scale: integer;
     OnCharacterChanged: PEventProc;
+    Scale: integer;
     constructor Create(AFont: PFont; const AID: string; AParent: PControl);
     destructor Free; virtual;
     procedure Paint(ARect: TRect); virtual;
     procedure Init; virtual;
-    procedure Layout(ARect: TRect); virtual;
+    procedure LayoutRect(ARect: TRect); virtual;
     procedure SetCurrentChar(AChar: char);
     procedure MouseDown(var AEvent: TMouseEvent); virtual;
     procedure MouseMove(var AEvent: TMouseEvent); virtual;
@@ -132,11 +132,11 @@ begin
   CurrentFont := AFont;
 end;
 
-procedure TFontGrid.Layout(ARect: TRect);
+procedure TFontGrid.LayoutRect(ARect: TRect);
 var
   rows: integer;
 begin
-  inherited Layout(ARect);
+  inherited LayoutRect(ARect);
   Width := CharsPerRow * (CurrentFont^.MaxWidth + 1) + 2 * BorderWidth;
   rows := 256 div CharsPerRow;
   if 256 mod CharsPerRow > 0 then
@@ -161,48 +161,46 @@ procedure TFontGrid.DrawChar(ARect: TRect; ACH: char; AClear: boolean);
 var
   row, column, cx, cy: integer;
   charRect: TRect;
-  buffer: PByte;
 begin
-  BeginDrawing;
   row := ord(ACH) div CharsPerRow;
   column := ord(ACH) mod CharsPerRow;
   cx := column * (CurrentFont^.MaxWidth + 1) + BorderWidth;
   cy := row * (CurrentFont^.Height + 1) + BorderWidth;
   Graph^.State^.Font := CurrentFont;
-  Graph^.State^.ViewPort := ARect;
-  Graph^.SetForeColor(ForeColor);
-  Graph^.SetBackColor(BackColor);
   charRect.CreateDims(ARect.X + cx, ARect.Y + cy,
     CurrentFont^.MaxWidth, CurrentFont^.Height);
   if AClear then begin
-    Graph^.PushState;
-    buffer := nil;
-    Graph^.BeginDrawBuffer(buffer, charRect);
     Graph^.FillRect(charRect);
     Graph^.DrawText(charRect.X, charRect.Y, ACH);
-    Graph^.EndDrawBuffer;
-    Graph^.PopState;
-    Graph^.DrawImage(ARect.X + cx, ARect.Y + cy,
-      charRect.Width, charRect.Height, buffer);
-    FreeMem(buffer, charRect.Width * charRect.Height);
   end
   else
     Graph^.DrawText(ARect.X + cx, ARect.Y + cy, ACH);
-  EndDrawing;
 end;
 
 procedure TFontGrid.Paint(ARect: TRect);
 var
   ch: char;
+  cy, lineIndex, index: integer;
+  line: string;
+  drawRect: TRect;
 begin
   inherited Paint(ARect);
   if CurrentFont = nil then
     exit;
+  GetDrawRect(drawRect);
   Graph^.SetForeColor(ForeColor);
   Graph^.SetBackColor(BackColor);
   Graph^.State^.Font := CurrentFont;
-  for ch := #0 to #255 do
-    DrawChar(ARect, ch, false);
+  Graph^.State^.OverrideFontWidth := CurrentFont^.MaxWidth + 1;
+  for index := 0 to 256 div CharsPerRow - 1 do begin
+    line := '';
+    cy := index * (CurrentFont^.Height + 1) + BorderWidth;
+    for lineIndex := 0 to CharsPerRow - 1 do begin
+      ch := char(index * CharsPerRow + lineIndex);
+      line := line + ch;
+    end;
+    Graph^.DrawText(drawRect.X, drawRect.Y + cy, line);
+  end;
   Graph^.SetForeColor(LineColor);
   DrawGridLines(ARect);
 end;
@@ -300,9 +298,9 @@ begin
   FButton := bsLeft;
 end;
 
-procedure TFontEditor.Layout(ARect: TRect);
+procedure TFontEditor.LayoutRect(ARect: TRect);
 begin
-  inherited Layout(ARect);
+  inherited LayoutRect(ARect);
   Width := CurrentFont^.MaxWidth * Scale + 2 * BorderWidth;
   Height := CurrentFont^.Height * Scale + 2 * BorderWidth;
 end;
