@@ -28,8 +28,13 @@ type
     SampleLabel1: PLabel;
     SampleLabel2: PLabel;
     SampleLabel3: PLabel;
+    Changed: boolean;
+    Filename: PChar;
     constructor Create(const AId, ATitle: string; AFont: PFont);
     destructor Free; virtual;
+    function WindowType: string; virtual;
+    function GetFilename: string;
+    procedure SetFilename(const AValue: string);
     procedure Init; virtual;
     procedure Initialized; virtual;
     procedure LayoutRect(ARect: TRect); virtual;
@@ -48,6 +53,8 @@ procedure FontGridSelectChar(var AEvent: TFontGridEvent); far;
 var
   ascii: integer;
   window: PFontWindow;
+  textWidth: integer;
+  rect: TRect;
 begin
   window := PFontWindow(PFontGrid(AEvent.Sender)^.Parent);
   with window^ do begin
@@ -78,9 +85,9 @@ begin
     while ptr^ <> #0 do begin
       if ptr^ = AChar then begin
         cx := AFont^.TextWidthAny(ALabel^.Caption, len - 1);
-        ALabel^.GetScreenBounds(rect);
+        ALabel^.GetDrawRect(rect);
         rect.Width := AFont^.TextWidth(AChar);
-        rect.Translate(x, 0);
+        rect.Translate(cx, 0);
         Graph^.SetBackColor(ALabel^.BackColor);
         Graph^.SetForeColor(ALabel^.ForeColor);
         Graph^.FillRect(rect);
@@ -107,11 +114,11 @@ var
     index := TString.IndexOf(ALabel^.Caption, AChar);
     LabelContainsChar := index > -1;
   end;
-
 begin
   window := PFontWindow(PFontGrid(AEvent.Sender)^.Parent);
+  window^.Changed := true;
   with window^ do begin
-    GetLayoutRect(rect);
+    Grid^.GetDrawRect(rect);
     Grid^.DrawChar(rect, AEvent.Character, true);
     if AEvent.NewCharWidth = AEvent.OldCharWidth then begin
       DrawSampleChar(SampleLabel1, grid^.CurrentFont, AEvent.Character);
@@ -120,12 +127,22 @@ begin
       exit;
     end;
     if LabelContainsChar(SampleLabel1, AEvent.Character) then
-      SampleLabel1^.Draw;
+      SampleLabel1^.SetCaption(SampleLabel1^.GetCaption);
     if LabelContainsChar(SampleLabel2, AEvent.Character) then
-      SampleLabel2^.Draw;
+      SampleLabel2^.SetCaption(SampleLabel2^.GetCaption);
     if LabelContainsChar(SampleLabel3, AEvent.Character) then
-      SampleLabel3^.Draw;
+      SampleLabel3^.SetCaption(SampleLabel3^.GetCaption);
   end;
+end;
+
+function TFontWindow.GetFilename: string;
+begin
+  GetFilename := TString.GetString(Filename);
+end;
+
+procedure TFontWindow.SetFilename(const AValue: string);
+begin
+  TString.AssignString(Filename, AValue);
 end;
 
 constructor TFontWindow.Create(const AId, ATitle: string; AFont: PFont);
@@ -137,6 +154,7 @@ end;
 destructor TFontWindow.Free;
 begin
   FreeAndNil(CurrentFont);
+  TString.Free(Filename);
   inherited Free;
 end;
 
@@ -147,18 +165,28 @@ begin
   Width := ScaleX(60);
   Height := ScaleY(80);
   ScrollType := scAsNeeded;
+  Changed := false;
+  Filename := nil;
 
   Grid := New(PFontGrid, Create(nil, 'FontGrid', @self));
+  Grid^.OnSelectChar := @FontGridSelectChar;
   FontEditor := New(PFontEditor, Create(nil, 'FontEditor', @self));
   FontEditor^.OnCharacterChanged := @FontEditorCharacterChanged;
   CurrentCharLabel := New(PLabel, CreateCaption('CurrentCharLabel', 'Selected Char: ', @self));
   CharAsciiLabel := New(PLabel, CreateCaption('CharAsciiLabel', 'ASCII: ', @self));
+  CurrentCharLabel^.TransparentBack := false;
+  CharAsciiLabel^.TransparentBack := false;
+
   SampleLabel1 := New(PLabel, CreateCaption('SampleLabel1',
     'the quick brown fox jumps over the lazy dog.', @self));
   SampleLabel2 := New(PLabel, CreateCaption('SampleLabel2',
     'THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG.\|abc', @self));
   SampleLabel3 := New(PLabel, CreateCaption('SampleLabel3',
     '1234567890!@#$%^&*()-_=+;:''",<.>/?`~{[]}\|abc', @self));
+
+  SampleLabel1^.TransparentBack := false;
+  SampleLabel2^.TransparentBack := false;
+  SampleLabel3^.TransparentBack := false;
 end;
 
 procedure TFontWindow.Initialized;
@@ -206,6 +234,11 @@ begin
   SampleLabel3^.X := Grid^.X;
   SampleLabel3^.Y := yPos;
   inherited LayoutRect(ARect);
+end;
+
+function TFontWindow.WindowType: string;
+begin
+  WindowType := 'FontWindow';
 end;
 
 end.

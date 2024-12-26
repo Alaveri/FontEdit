@@ -66,7 +66,7 @@ var
 begin
   inherited Assign(ASource);
   source := PFontProperties(@ASource);
-  TString.Reassign(Id, source^.Id);
+  TString.Assign(Id, source^.Id);
   Format := Source^.Format;
   MaxWidth := Source^.MaxWidth;
   Height := Source^.Height;
@@ -101,8 +101,8 @@ var
 begin
   inherited Assign(ASource);
   source := PFontAppSettings(@ASource);
-  TString.Reassign(LastOpenDir, source^.LastOpenDir);
-  TString.Reassign(LastSaveDir, source^.LastSaveDir);
+  TString.Assign(LastOpenDir, source^.LastOpenDir);
+  TString.Assign(LastSaveDir, source^.LastSaveDir);
 end;
 
 procedure TFontAppSettings.LoadFromStream(AStream: PStream);

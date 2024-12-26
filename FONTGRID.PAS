@@ -67,6 +67,7 @@ type
     Scale: integer;
     constructor Create(AFont: PFont; const AID: string; AParent: PControl);
     destructor Free; virtual;
+    function GetPixelAt(AX, AY: integer; var APos: TPoint): boolean;
     procedure Paint(ARect: TRect); virtual;
     procedure Init; virtual;
     procedure LayoutRect(ARect: TRect); virtual;
@@ -74,7 +75,8 @@ type
     procedure MouseDown(var AEvent: TMouseEvent); virtual;
     procedure MouseMove(var AEvent: TMouseEvent); virtual;
     procedure MouseUp(var AEvent: TMouseEvent); virtual;
-    procedure PaintPixel(ARect: TRect; AX, AY: integer; APixelOn: boolean); virtual;
+    procedure PaintPixelAt(AX, AY: integer; APixelOn: boolean);
+    procedure PaintPixel(AColumn, ARow: integer; APixelOn: boolean);
   end;
 
 implementation
@@ -162,10 +164,12 @@ var
   row, column, cx, cy: integer;
   charRect: TRect;
 begin
+  Graph^.SetForeColor(ForeColor);
+  Graph^.SetBackColor(BackColor);
   row := ord(ACH) div CharsPerRow;
   column := ord(ACH) mod CharsPerRow;
-  cx := column * (CurrentFont^.MaxWidth + 1) + BorderWidth;
-  cy := row * (CurrentFont^.Height + 1) + BorderWidth;
+  cx := column * (CurrentFont^.MaxWidth + 1) + OuterWidth;
+  cy := row * (CurrentFont^.Height + 1) + OuterWidth;
   Graph^.State^.Font := CurrentFont;
   charRect.CreateDims(ARect.X + cx, ARect.Y + cy,
     CurrentFont^.MaxWidth, CurrentFont^.Height);
@@ -246,9 +250,27 @@ begin
   CurrentFont := AFont;
 end;
 
-procedure TFontEditor.PaintPixel(ARect: TRect; AX, AY: integer; APixelOn: boolean);
+function TFontEditor.GetPixelAt(AX, AY: integer; var APos: TPoint): boolean;
+begin
+  GetPixelAt := true;
+  APos.CreateCoords((AX - OuterWidth) div Scale, (AY - OuterWidth) div Scale);
+  if (APos.X < 0) or (APos.X >= CurrentFont^.MaxWidth) or
+    (APos.X < 0) or (APos.Y >= CurrentFont^.Height) then
+    GetPixelAt := false;
+end;
+
+procedure TFontEditor.PaintPixelAt(AX, AY: integer; APixelOn: boolean);
 var
-  drawRect: TRect;
+  pos: TPoint;
+begin
+  if not GetPixelAt(AX, AY, pos) then
+    exit;
+  PaintPixel(pos.X, pos.Y, APixelOn);
+end;
+
+procedure TFontEditor.PaintPixel(AColumn, ARow: integer; APixelOn: boolean);
+var
+  drawRect, clipRect, rect: TRect;
 begin
   if CurrentFont = nil then
     exit;
@@ -259,10 +281,12 @@ begin
     Graph^.SetBackColor(ForeColor)
   else
     Graph^.SetBackColor(BackColor);
-  AX := AX * Scale + ARect.X;
-  AY := AY * Scale + ARect.Y;
-  drawRect.CreateDims(AX, AY, Scale, Scale);
-  Graph^.FillRect(drawRect);
+  rect.CreateDims(AColumn * Scale, ARow * Scale, Scale, Scale);
+  rect.Translate(ScreenX, ScreenY);
+  rect.Translate(Parent^.ContentOffsetX, Parent^.ContentOffsetY);
+  GetClipRect(clipRect);
+  rect.Intersect(clipRect);
+  Graph^.FillRect(rect);
 end;
 
 procedure TFontEditor.Paint(ARect: TRect);
@@ -279,7 +303,7 @@ begin
   for yIndex := 0 to CurrentFont^.Height - 1 do begin
     for xIndex := 0 to CurrentFont^.MaxWidth - 1 do begin
       if CurrentFont^.IsPixelSet(CurrentChar, xIndex, yIndex) then begin
-        PaintPixel(ARect, xIndex, yIndex, true);
+        PaintPixel(xIndex, yIndex, true);
       end;
     end;
   end;
@@ -311,7 +335,7 @@ begin
   Draw;
 end;
 
-procedure DoSetPixel(ARect: TRect; AX, AY: integer; AData: pointer); far;
+procedure DoSetPixel(AX, AY: integer; AData: pointer); far;
 var
   fontEditor: PFontEditor;
   currentFont: PFont;
@@ -322,83 +346,73 @@ begin
   currentChar := fontEditor^.CurrentChar;
   if fontEditor^.FButton = bsLeft then begin
     currentFont^.SetPixel(currentChar, AX, AY);
-    fontEditor^.PaintPixel(ARect, AX, AY, true);
+    fontEditor^.PaintPixel(AX, AY, true);
   end
   else begin
     currentFont^.ClearPixel(currentChar, AX, AY);
-    fontEditor^.PaintPixel(ARect, AX, AY, false);
+    fontEditor^.PaintPixel(AX, AY, false);
   end;
 end;
 
 procedure TFontEditor.MouseDown(var AEvent: TMouseEvent);
 var
-  xIndex, yIndex: integer;
-  rect: TRect;
   event: TFontEditorChangedEvent;
+  pos: TPoint;
 begin
+  inherited MouseDown(AEvent);
   if AEvent.Handled then
     exit;
-  GetScreenBounds(rect);
-  xIndex := (AEvent.X - BorderWidth) div Scale;
-  yIndex := (AEvent.Y - BorderWidth) div Scale;
-  if (xIndex < 0) or (xIndex >= CurrentFont^.MaxWidth) or
-    (yIndex < 0) or (yIndex >= CurrentFont^.Height) then
+  if not GetPixelAt(AEvent.X, AEvent.Y, pos) then
     exit;
-  FPreviousPixel.SetCoords(xIndex, yIndex);
-
+  FPreviousPixel.SetCoords(pos.X, pos.Y);
   event.Create;
   event.Character := currentChar;
   event.OldCharWidth := currentFont^.CharWidth(CurrentChar);
   BeginDrawing;
   if AEvent.NewMouseState.ButtonState = [bsLeft] then begin
     FButton := bsLeft;
-    DoSetPixel(rect, xIndex, yIndex, @self);
+    DoSetPixel(pos.X, pos.Y, @self);
   end
   else if AEvent.NewMouseState.ButtonState = [bsRight] then begin
     FButton := bsRight;
-    DoSetPixel(rect, xIndex, yIndex, @self);
+    DoSetPixel(pos.X, pos.Y, @self);
   end;
   EndDrawing;
   currentFont^.SetCharWidths;
   event.NewCharWidth := currentFont^.CharWidth(CurrentChar);
   Invoke(OnCharacterChanged, event);
-  inherited MouseDown(AEvent);
 end;
 
 procedure TFontEditor.MouseMove(var AEvent: TMouseEvent);
 var
-  xIndex, yIndex: integer;
-  rect: TRect;
   event: TFontEditorChangedEvent;
+  pos: TPoint;
+  rect: TRect;
 begin
   if AEvent.Handled then
     exit;
-  if not ((VeridianApp^.LeftMouseDownControl = @self) or
-    (VeridianApp^.RightMouseDownControl = @self)) then
+  if VeridianApp^.LeftMouseDownControl = @self then
+    FButton := bsLeft
+  else if VeridianApp^.RightMouseDownControl = @self then
+    FButton := bsRight
+  else
     exit;
-  xIndex := (AEvent.X - BorderWidth) div Scale;
-  yIndex := (AEvent.Y - BorderWidth) div Scale;
-  if FPreviousPixel.EqualsCoords(xIndex, yIndex) then
-    exit;
-  if (xIndex < 0) or (xIndex >= CurrentFont^.MaxWidth) or
-    (yIndex < 0) or (yIndex >= CurrentFont^.Height) then
+
+  GetPixelAt(AEvent.X, AEvent.Y, pos);
+  if FPreviousPixel.EqualsCoords(pos.X, pos.Y) then
     exit;
   event.Create;
   event.Character := currentChar;
   event.OldCharWidth := currentFont^.CharWidth(CurrentChar);
   rect.CreateDims(0, 0, CurrentFont^.MaxWidth, CurrentFont^.Height);
   BeginDrawing;
-  if VeridianApp^.LeftMouseDownControl = @self then
-    FButton := bsLeft
-  else if VeridianApp^.RightMouseDownControl = @self then
-    FButton := bsRight;
-  LineDraw(FPreviousPixel.X, FPreviousPixel.Y, xIndex, yIndex,
+  LineDraw(FPreviousPixel.X, FPreviousPixel.Y, pos.X, pos.Y,
     rect, @DoSetPixel, @self);
   EndDrawing;
   currentFont^.SetCharWidths;
   event.NewCharWidth := currentFont^.CharWidth(CurrentChar);
   Invoke(OnCharacterChanged, event);
-  FPreviousPixel.SetCoords(xIndex, yIndex);
+  FPreviousPixel.SetCoords(pos.X, pos.Y);
   inherited MouseMove(AEvent);
 end;
 

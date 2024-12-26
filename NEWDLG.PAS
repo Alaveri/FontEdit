@@ -126,6 +126,8 @@ var
   numEntryX: integer;
 begin
   inherited LayoutRect(ARect);
+  VeridianApp^.PushState;
+  VeridianApp^.State.DrawEnabled := false;
   xPos := 0;
   yPos := 3;
   entryHeight := FontIdLabel^.Font^.Height + 6;
@@ -160,6 +162,7 @@ begin
 
   Width := 200;
   Height := 180;
+  VeridianApp^.PopState;
 end;
 
 procedure TNewFontDialog.Paint(ARect: TRect);
