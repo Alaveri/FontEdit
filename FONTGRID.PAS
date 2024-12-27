@@ -198,7 +198,7 @@ begin
   Graph^.State^.OverrideFontWidth := CurrentFont^.MaxWidth + 1;
   for index := 0 to 256 div CharsPerRow - 1 do begin
     line := '';
-    cy := index * (CurrentFont^.Height + 1) + BorderWidth;
+    cy := index * (CurrentFont^.Height + 1) + OuterWidth;
     for lineIndex := 0 to CharsPerRow - 1 do begin
       ch := char(index * CharsPerRow + lineIndex);
       line := line + ch;

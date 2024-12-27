@@ -23,6 +23,7 @@ type
     function CreateFont: PFont;
     procedure Init; virtual;
     procedure Assign(var ASource: TObject); virtual;
+    procedure AssignFromFont(AFont: PFont); virtual;
   end;
 
   TFontAppSettings = object(TPersistent)
@@ -71,6 +72,15 @@ begin
   MaxWidth := Source^.MaxWidth;
   Height := Source^.Height;
   Spacing := Source^.Spacing;
+end;
+
+procedure TFontProperties.AssignFromFont(AFont: PFont);
+begin
+  TString.Assign(Id, AFont^.Id);
+  Format := AFont^.Format;
+  MaxWidth := AFont^.MaxWidth;
+  Height := AFont^.Height;
+  Spacing := AFont^.Spacing;
 end;
 
 function TFontProperties.CreateFont: PFont;

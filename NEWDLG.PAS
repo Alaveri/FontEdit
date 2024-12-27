@@ -83,6 +83,7 @@ begin
   VeridianApp^.PushState;
   VeridianApp^.State.DrawEnabled := false;
   InitialLocation := wpScreenCenter;
+  Exclude(WindowOptions, woResizeable);
 
   FontIdLabel := New(PLabel, CreateCaption('FontIdLabel', 'Font Id: ', @self));
   FontIdEntry := New(PEdit, CreateParent('FontIdEntry', @self));
@@ -204,6 +205,8 @@ begin
 
   VeridianApp^.PushState;
   VeridianApp^.State.DrawEnabled := false;
+  if Assigned(AProperties^.Id) then
+    FontIdEntry^.SetText(StrPas(AProperties^.Id));
   FontFormatEntry^.SetSelectedIndex(ord(AProperties^.Format));
   MaxWidthEntry^.SetValue(AProperties^.MaxWidth);
   HeightEntry^.SetValue(AProperties^.Height);

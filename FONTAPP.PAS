@@ -65,6 +65,7 @@ type
     procedure OpenFont;
     procedure CloseWindow;
     procedure CloseWindows;
+    procedure ShowProperties;
     procedure UpdateActionControl(AControl: PActionControl); virtual;
   end;
 
@@ -120,6 +121,35 @@ begin
   CreateFontWindow := window;
 end;
 
+procedure TFontApplication.ShowProperties;
+var
+  dialog: TNewFontDialog;
+  properties: PFontProperties;
+  result: TModalResult;
+  font: PFont;
+  window: PFontWindow;
+begin
+  if not (Assigned(ActiveWindow) and ActiveWindow^.IsWindowType('FontWindow')) then
+    exit;
+  properties := New(PFontProperties, Create);
+  window := PFontWindow(ActiveWindow);
+  properties^.AssignFromFont(PFont(window^.CurrentFont));
+  dialog.Create('FontPropsDialog', 'Font Properties', [mbOk, mbCancel]);
+  result := dialog.Execute(properties);
+  if result = mrOk then begin
+    TString.Assign(window^.CurrentFont^.Id, properties^.Id);
+    TString.Assign(window^.TitleBar^.Caption, properties^.Id);
+    TString.Assign(window^.TaskButton^.Caption, properties^.Id);
+    window^.CurrentFont^.Spacing := properties^.Spacing;
+    TaskBar^.Layout;
+    window^.TaskButton^.Draw;
+    window^.Draw;
+    window^.Changed := true;
+  end;
+  dialog.Free;
+  FreeAndNil(properties);
+end;
+
 procedure TFontApplication.NewFont;
 var
   dialog: TNewFontDialog;
@@ -159,13 +189,13 @@ begin
   end;
   if result = mrOk then begin
     font := FontManager.CreateFromFile(dialog.GetFilename);
-    if CheckReRaise(@FontManager) then begin
-      FreeAndNil(font);
-      Error(self, Exception^.Code);
-    end
-    else if not Assigned(font) then begin
+    if not Assigned(font) then begin
       FreeAndNil(font);
       Error(self, ecNotEnoughMemory);
+    end
+    else if CheckReRaise(@FontManager) then begin
+      FreeAndNil(font);
+      Error(self, Exception^.Code);
     end
     else begin
       TString.AssignString(AppSettings.LastOpenDir, ExtractDirectory(dialog.GetFilename));
@@ -202,6 +232,7 @@ begin
     else begin
       TString.AssignString(AppSettings.LastSaveDir, ExtractDirectory(dialog.GetFilename));
       AppSettings.SaveToFile(SettingsFilename);
+      TString.Assign(AWindow^.Filename, dialog.Filename);
       AWindow^.Changed := false;
     end;
   end;
@@ -305,7 +336,7 @@ begin
     Add(New(PAction, Create(acCopy, '&Copy', kyCtrlC)));
     Add(New(PAction, Create(acPaste, '&Paste', kyCtrlV)));
     Add(New(PAction, Create(acDelete, '&Delete', kyDel)));
-    Add(New(PAction, Create(acFontProperties, 'Font &Properties...', 0)));
+    Add(New(PAction, Create(acFontProperties, '&Font Properties...', 0)));
     Add(New(PAction, Create(acAbout, '&About...', 0)));
   end;
 end;
@@ -372,7 +403,7 @@ begin
     acCopy: ;
     acPaste: ;
     acDelete: ;
-    acFontProperties: ;
+    acFontProperties: ShowProperties;
     acAbout: ;
   end;
 end;
@@ -415,7 +446,7 @@ begin
     acCopy: ;
     acPaste: ;
     acDelete: ;
-    acFontProperties: ;
+    acFontProperties: AControl^.Action^.Enabled := isFontWindow;
     acAbout: ;
   end;
 end;

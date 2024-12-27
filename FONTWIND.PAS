@@ -180,9 +180,9 @@ begin
   SampleLabel1 := New(PLabel, CreateCaption('SampleLabel1',
     'the quick brown fox jumps over the lazy dog.', @self));
   SampleLabel2 := New(PLabel, CreateCaption('SampleLabel2',
-    'THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG.\|abc', @self));
+    'THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG.', @self));
   SampleLabel3 := New(PLabel, CreateCaption('SampleLabel3',
-    '1234567890!@#$%^&*()-_=+;:''",<.>/?`~{[]}\|abc', @self));
+    '1234567890!@#$%^&*()-_=+;:''",<.>/?`~{[]}\|', @self));
 
   SampleLabel1^.TransparentBack := false;
   SampleLabel2^.TransparentBack := false;
