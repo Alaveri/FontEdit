@@ -9,7 +9,7 @@ uses
   FontApp;
 
 begin
-  FontApplication := New(PFontApplication, Create(gdSVga8, 640, 480 , 8));
+  FontApplication := New(PFontApplication, Create(gdSVga8, 640, 480, 8));
   if not Assigned(FontApplication) then begin
     WriteLn(ErrorMessage(ecNotEnoughMemory) + '.');
     Halt(ecNotEnoughMemory);

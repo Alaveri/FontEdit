@@ -34,11 +34,13 @@ type
     destructor Free; virtual;
     function WindowType: string; virtual;
     function GetFilename: string;
+    function WindowTitle: string;
     procedure SetFilename(const AValue: string);
     procedure Init; virtual;
     procedure Initialized; virtual;
     procedure LayoutRect(ARect: TRect); virtual;
     procedure DrawSampleChar(ALabel: PLabel; AFont: PFont; AChar: char);
+    procedure UpdateTitle;
   end;
 
 implementation
@@ -116,7 +118,10 @@ var
   end;
 begin
   window := PFontWindow(PFontGrid(AEvent.Sender)^.Parent);
-  window^.Changed := true;
+  if not window^.Changed then begin
+    window^.Changed := true;
+    window^.UpdateTitle;
+  end;
   with window^ do begin
     Grid^.GetDrawRect(rect);
     Grid^.DrawChar(rect, AEvent.Character, true);
@@ -126,12 +131,14 @@ begin
       DrawSampleChar(SampleLabel3, grid^.CurrentFont, AEvent.Character);
       exit;
     end;
+    Desktop^.BeginDrawing;
     if LabelContainsChar(SampleLabel1, AEvent.Character) then
-      SampleLabel1^.SetCaption(SampleLabel1^.GetCaption);
+      SampleLabel1^.DrawDoubleBuffered;
     if LabelContainsChar(SampleLabel2, AEvent.Character) then
-      SampleLabel2^.SetCaption(SampleLabel2^.GetCaption);
+      SampleLabel2^.DrawDoubleBuffered;
     if LabelContainsChar(SampleLabel3, AEvent.Character) then
-      SampleLabel3^.SetCaption(SampleLabel3^.GetCaption);
+      SampleLabel3^.DrawDoubleBuffered;
+    Desktop^.EndDrawing;
   end;
 end;
 
@@ -143,6 +150,30 @@ end;
 procedure TFontWindow.SetFilename(const AValue: string);
 begin
   TString.AssignString(Filename, AValue);
+end;
+
+function TFontWindow.WindowTitle: string;
+var
+  name, result: string;
+begin
+  if Assigned(Filename) then
+    name := ExtractFullName(GetFilename)
+  else
+    name := 'Untitled.fnt';
+  result := CurrentFont^.GetId + ' (' + name  + ')';
+  if Changed then
+    result := result + #7;
+  WindowTitle := result;
+end;
+
+procedure TFontWindow.UpdateTitle;
+var
+  rect: TRect;
+begin
+  TString.AssignString(TitleBar^.Caption, WindowTitle);
+  TitleBar^.DrawDoubleBuffered;
+  TString.AssignString(TaskButton^.Caption, WindowTitle);
+  VeridianApp^.TaskBar^.DrawDoubleBuffered;
 end;
 
 constructor TFontWindow.Create(const AId, ATitle: string; AFont: PFont);
@@ -167,7 +198,6 @@ begin
   ScrollType := scAsNeeded;
   Changed := false;
   Filename := nil;
-
   Grid := New(PFontGrid, Create(nil, 'FontGrid', @self));
   Grid^.OnSelectChar := @FontGridSelectChar;
   FontEditor := New(PFontEditor, Create(nil, 'FontEditor', @self));
@@ -178,11 +208,11 @@ begin
   CharAsciiLabel^.TransparentBack := false;
 
   SampleLabel1 := New(PLabel, CreateCaption('SampleLabel1',
-    'the quick brown fox jumps over the lazy dog.', @self));
+    'the quick brown fox jumps over the lazy dog.  ', @self));
   SampleLabel2 := New(PLabel, CreateCaption('SampleLabel2',
-    'THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG.', @self));
+    'THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG.  ', @self));
   SampleLabel3 := New(PLabel, CreateCaption('SampleLabel3',
-    '1234567890!@#$%^&*()-_=+;:''",<.>/?`~{[]}\|', @self));
+    '1234567890!@#$%^&*()-_=+;:''",<.>/?`~{[]}\|  ', @self));
 
   SampleLabel1^.TransparentBack := false;
   SampleLabel2^.TransparentBack := false;

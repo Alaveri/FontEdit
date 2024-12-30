@@ -14,6 +14,7 @@ uses
   Controls,
   Menus,
   NewDlg,
+  SaveConf,
   Views,
   FontType,
   FontWind,
@@ -76,6 +77,7 @@ implementation
 
 uses
   Dialogs,
+  Drawing,
   AplUtils,
   AplStr,
   Streams,
@@ -116,8 +118,6 @@ begin
     Error(self, ecNotEnoughMemory);
     exit;
   end;
-  window^.Activate;
-  window^.Show;
   CreateFontWindow := window;
 end;
 
@@ -128,23 +128,24 @@ var
   result: TModalResult;
   font: PFont;
   window: PFontWindow;
+  rect: TRect;
 begin
   if not (Assigned(ActiveWindow) and ActiveWindow^.IsWindowType('FontWindow')) then
     exit;
   properties := New(PFontProperties, Create);
   window := PFontWindow(ActiveWindow);
-  properties^.AssignFromFont(PFont(window^.CurrentFont));
+  properties^.AssignFromFont(window^.CurrentFont);
   dialog.Create('FontPropsDialog', 'Font Properties', [mbOk, mbCancel]);
   result := dialog.Execute(properties);
   if result = mrOk then begin
+    window^.Changed := true;
     TString.Assign(window^.CurrentFont^.Id, properties^.Id);
-    TString.Assign(window^.TitleBar^.Caption, properties^.Id);
+    window^.SetTitle(window^.WindowTitle);
     TString.Assign(window^.TaskButton^.Caption, properties^.Id);
     window^.CurrentFont^.Spacing := properties^.Spacing;
     TaskBar^.Layout;
-    window^.TaskButton^.Draw;
-    window^.Draw;
-    window^.Changed := true;
+    window^.TaskButton^.DrawDoubleBuffered;
+    window^.DrawDoubleBuffered;
   end;
   dialog.Free;
   FreeAndNil(properties);
@@ -168,6 +169,8 @@ begin
       Error(self, ecNotEnoughMemory)
     else
       window^.Changed := true;
+    window^.Activate;
+    window^.Show;
   end;
   dialog.Free;
   FreeAndNil(properties);
@@ -189,10 +192,8 @@ begin
   end;
   if result = mrOk then begin
     font := FontManager.CreateFromFile(dialog.GetFilename);
-    if not Assigned(font) then begin
-      FreeAndNil(font);
-      Error(self, ecNotEnoughMemory);
-    end
+    if not Assigned(font) then
+      Error(self, ecNotEnoughMemory)
     else if CheckReRaise(@FontManager) then begin
       FreeAndNil(font);
       Error(self, Exception^.Code);
@@ -202,6 +203,9 @@ begin
       AppSettings.SaveToFile(SettingsFilename);
       window := CreateFontWindow(font);
       TString.Assign(window^.Filename, dialog.Filename);
+      window^.SetTitle(window^.WindowTitle);
+      window^.Activate;
+      window^.Show;
     end;
   end;
   dialog.Free;
@@ -215,7 +219,7 @@ begin
   SaveFontAs := false;
   if not Assigned(AWindow) then
     AWindow := PFontWindow(ActiveWindow);
-  dialog.Create('SaveFontDialog', 'Save Font "' + AWindow^.TitleBar^.GetCaption + '"');
+  dialog.Create('SaveFontDialog', 'Save Font "' + AWindow^.CurrentFont^.GetId + '"');
   with dialog do begin
     SetInitialPath(TString.GetString(AppSettings.LastSaveDir) + '*.fnt');
     FileOptions := [foOverwritePrompt];
@@ -234,6 +238,7 @@ begin
       AppSettings.SaveToFile(SettingsFilename);
       TString.Assign(AWindow^.Filename, dialog.Filename);
       AWindow^.Changed := false;
+      AWindow^.UpdateTitle;
     end;
   end;
   dialog.Free;
@@ -248,8 +253,10 @@ begin
     SaveFont := SaveFontAs(AWindow)
   else begin
     AWindow^.CurrentFont^.SaveToFile(AWindow^.GetFilename);
+    AWindow^.SetTitle(AWindow^.WindowTitle);
     SaveFont := true;
     AWindow^.Changed := false;
+    AWindow^.UpdateTitle;
   end;
 end;
 
@@ -265,7 +272,7 @@ begin
   window := PFontWindow(ActiveWindow);
   closeOk := true;
   if window^.Changed then begin
-    dialog.Create('Save Changes', 'Save changes to font "' + window^.TitleBar^.GetCaption + '"?',
+    dialog.Create('Save Changes', 'Save changes to font "' + window^.CurrentFont^.GetId + '"?',
        [mbYes, mbNo, mbCancel]);
     result := dialog.ShowDialog;
     if result = mrNo then

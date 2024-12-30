@@ -93,7 +93,7 @@ begin
   FontFormatEntry := New(PDropDownList, CreateParent('FontFormatEntry', @self));
   for formatIndex := Low(TFontFormat) to High(TFontFormat) do begin
     if formatIndex in SupportedFontFormats then
-      FontFormatEntry^.Items^.AddTag(FontFormatNames[formatIndex], byte(formatIndex));
+      FontFormatEntry^.List^.AddItemTag(FontFormatNames[formatIndex], byte(formatIndex));
   end;
   FontFormatEntry^.OnSelectedIndexChanged := @FontFormatChanged;
 
