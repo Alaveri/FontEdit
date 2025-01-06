@@ -5,118 +5,133 @@ interface
 
 uses
   AplObj,
-  AplConst,
-  AplStrms;
-
-const
-  AppVersion = '0.1.0';
+  AplTypes,
+  Streams,
+  Graphics;
 
 type
-  PFontSettings = ^TFontSettings;
+  PFontProperties = ^TFontProperties;
+  PFontAppSettings = ^TFontAppSettings;
 
-  TFontSettings = object(TStatusObject)
+  TFontProperties = object(TIdentifiable)
+  private
+  public
+    Format: TFontFormat;
+    MaxWidth: integer;
+    Height: integer;
+    Spacing: integer;
+    function CreateFont: PFont;
+    procedure Init; virtual;
+    procedure Assign(var ASource: TObject); virtual;
+    procedure AssignFromFont(AFont: PFont); virtual;
+  end;
+
+  TFontAppSettings = object(TPersistent)
   private
   public
     LastOpenDir: PChar;
     LastSaveDir: PChar;
-    constructor LoadFromStream(AStream: PStream);
-    constructor LoadFromFile(const AFilename: string);
+    procedure LoadFromStream(AStream: PStream); virtual;
+    procedure SaveToStream(AStream: PStream); virtual;
     destructor Free; virtual;
     procedure Init; virtual;
     procedure Assign(var ASource: TObject); virtual;
-    procedure SaveToStream(AStream: PStream);
-    procedure SaveToFile(const AFilename: string);
   end;
 
-function SettingsFilename: string; far;
+const
+  SupportedFontFormats: TFontFormats = [
+    ffMonoSpace,
+    ffProportional,
+    ffSystem,
+    ffColored
+  ];
 
 implementation
 
-
 uses
   AplUtils,
-  Veridian,
   AplStr;
 
-function SettingsFilename: string;
+procedure TFontProperties.Init;
 begin
-  SettingsFilename := IncludeBackslash(AppDir) +  'settings.bin';
+  Id := nil;
+  Format := ffProportional;
+  MaxWidth := 8;
+  Height := 16;
+  Spacing := 1;
 end;
 
-procedure TFontSettings.Init;
-begin
-  inherited Init;
-  LastOpenDir := nil;
-  LastSaveDir := nil;
-end;
-
-procedure TFontSettings.Assign(var ASource: TObject);
+procedure TFontProperties.Assign(var ASource: TObject);
 var
-  source: PFontSettings;
+  source: PFontProperties;
 begin
   inherited Assign(ASource);
-  source := PFontSettings(@ASource);
-  TString.Reassign(LastOpenDir, source^.LastOpenDir);
-  TString.Reassign(LastSaveDir, source^.LastSaveDir);
+  source := PFontProperties(@ASource);
+  TString.Assign(Id, source^.Id);
+  Format := Source^.Format;
+  MaxWidth := Source^.MaxWidth;
+  Height := Source^.Height;
+  Spacing := Source^.Spacing;
 end;
 
-constructor TFontSettings.LoadFromStream(AStream: PStream);
+procedure TFontProperties.AssignFromFont(AFont: PFont);
+begin
+  TString.Assign(Id, AFont^.Id);
+  Format := AFont^.Format;
+  MaxWidth := AFont^.MaxWidth;
+  Height := AFont^.Height;
+  Spacing := AFont^.Spacing;
+end;
+
+function TFontProperties.CreateFont: PFont;
+var
+  result: PFont;
+begin
+  case Format of
+    ffMonoSpace: result := New(PMonospaceFont, CreateSize(MaxWidth, Height, Spacing));
+    ffProportional: result := New(PProportionalFont, CreateSize(MaxWidth, Height, Spacing));
+    ffSystem: result := New(PSystemFont, Create);
+    ffColored: result := New(PColoredFont, CreateSize(MaxWidth, Height, Spacing));
+  end;
+  result^.Id := TString.Copy(Id);
+  result^.SetFormat(Format);
+  CreateFont := result;
+end;
+
+procedure TFontAppSettings.Init;
+begin
+  inherited Init;
+  LastOpenDir := TString.New(AppDir);
+  LastSaveDir := TString.New(AppDir);
+end;
+
+procedure TFontAppSettings.Assign(var ASource: TObject);
+var
+  source: PFontAppSettings;
+begin
+  inherited Assign(ASource);
+  source := PFontAppSettings(@ASource);
+  TString.Assign(LastOpenDir, source^.LastOpenDir);
+  TString.Assign(LastSaveDir, source^.LastSaveDir);
+end;
+
+procedure TFontAppSettings.LoadFromStream(AStream: PStream);
 begin
   inherited Create;
   TString.Free(LastOpenDir);
   TString.Free(LastSaveDir);
   LastOpenDir := AStream^.ReadPChar;
   LastSaveDir := AStream^.ReadPChar;
-  if CheckReraise(AStream) then begin
-    TString.Free(LastOpenDir);
-    TString.Free(LastSaveDir);
-    LastOpenDir := TString.New(AppDir);
-    LastSaveDir := TString.New(AppDir);
-  end;
 end;
 
-constructor TFontSettings.LoadFromFile(const AFilename: string);
-var
-  stream: PFileStream;
+procedure TFontAppSettings.SaveToStream(AStream: PStream);
 begin
-  inherited Create;
-  stream := New(PFileStream, Create(AFilename, fmRead));
-  if NilPtr(stream, ecNotEnoughMemory) then
-    exit;
-  if FileExists(AFilename) then begin
-    LoadFromStream(stream);
-    CheckReraise(stream);
-    FreeAndNil(stream);
-    exit;
-  end;
-  Raise(ecFileNotFound);
-end;
-
-procedure TFontSettings.SaveToFile(const AFilename: string);
-var
-  stream: PFileStream;
-begin
-  stream := New(PFileStream, Create(AFilename, fmWrite));
-  if NilPtr(stream, ecNotEnoughMemory) then
-    exit;
-  SaveToStream(stream);
-  CheckReraise(stream);
-  FreeAndNil(stream);
-end;
-
-procedure TFontSettings.SaveToStream(AStream: PStream);
-var
-  len: word;
-  start: longint;
-begin
-  len := TString.Length(LastOpenDir);
   AStream^.WritePChar(LastOpenDir);
   AStream^.WritePChar(LastSaveDir);
-  VeridianApp^.Settings.SaveToStream(AStream);
-  CheckReraise(AStream);
+  CheckReRaise(AStream);
 end;
 
-destructor TFontSettings.Free;
+destructor TFontAppSettings.Free;
 begin
   TString.Free(LastOpenDir);
   TString.Free(LastSaveDir);
