@@ -23,6 +23,7 @@ type
     function CreateFont: PFont;
     procedure Init; virtual;
     procedure Assign(var ASource: TObject); virtual;
+    procedure AssignFromFont(AFont: PFont); virtual;
   end;
 
   TFontAppSettings = object(TPersistent)
@@ -66,11 +67,20 @@ var
 begin
   inherited Assign(ASource);
   source := PFontProperties(@ASource);
-  TString.Reassign(Id, source^.Id);
+  TString.Assign(Id, source^.Id);
   Format := Source^.Format;
   MaxWidth := Source^.MaxWidth;
   Height := Source^.Height;
   Spacing := Source^.Spacing;
+end;
+
+procedure TFontProperties.AssignFromFont(AFont: PFont);
+begin
+  TString.Assign(Id, AFont^.Id);
+  Format := AFont^.Format;
+  MaxWidth := AFont^.MaxWidth;
+  Height := AFont^.Height;
+  Spacing := AFont^.Spacing;
 end;
 
 function TFontProperties.CreateFont: PFont;
@@ -101,8 +111,8 @@ var
 begin
   inherited Assign(ASource);
   source := PFontAppSettings(@ASource);
-  TString.Reassign(LastOpenDir, source^.LastOpenDir);
-  TString.Reassign(LastSaveDir, source^.LastSaveDir);
+  TString.Assign(LastOpenDir, source^.LastOpenDir);
+  TString.Assign(LastSaveDir, source^.LastSaveDir);
 end;
 
 procedure TFontAppSettings.LoadFromStream(AStream: PStream);

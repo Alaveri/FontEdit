@@ -39,7 +39,7 @@ type
     function Execute(var AProperties: PFontProperties): TModalResult; virtual;
     function CanExecute(AActionId: word): boolean; virtual;
     procedure Init; virtual;
-    procedure Layout(ARect: TRect); virtual;
+    procedure LayoutRect(ARect: TRect); virtual;
     procedure Paint(ARect: TRect); virtual;
     procedure AfterShow; virtual;
   end;
@@ -83,6 +83,7 @@ begin
   VeridianApp^.PushState;
   VeridianApp^.State.DrawEnabled := false;
   InitialLocation := wpScreenCenter;
+  Exclude(WindowOptions, woResizeable);
 
   FontIdLabel := New(PLabel, CreateCaption('FontIdLabel', 'Font Id: ', @self));
   FontIdEntry := New(PEdit, CreateParent('FontIdEntry', @self));
@@ -92,7 +93,7 @@ begin
   FontFormatEntry := New(PDropDownList, CreateParent('FontFormatEntry', @self));
   for formatIndex := Low(TFontFormat) to High(TFontFormat) do begin
     if formatIndex in SupportedFontFormats then
-      FontFormatEntry^.Items^.AddTag(FontFormatNames[formatIndex], byte(formatIndex));
+      FontFormatEntry^.List^.AddItemTag(FontFormatNames[formatIndex], byte(formatIndex));
   end;
   FontFormatEntry^.OnSelectedIndexChanged := @FontFormatChanged;
 
@@ -119,13 +120,15 @@ begin
   VeridianApp^.PopState;
 end;
 
-procedure TNewFontDialog.Layout(ARect: TRect);
+procedure TNewFontDialog.LayoutRect(ARect: TRect);
 var
   xPos, yPos: integer;
   entryHeight: integer;
   numEntryX: integer;
 begin
-  inherited Layout(ARect);
+  inherited LayoutRect(ARect);
+  VeridianApp^.PushState;
+  VeridianApp^.State.DrawEnabled := false;
   xPos := 0;
   yPos := 3;
   entryHeight := FontIdLabel^.Font^.Height + 6;
@@ -160,6 +163,7 @@ begin
 
   Width := 200;
   Height := 180;
+  VeridianApp^.PopState;
 end;
 
 procedure TNewFontDialog.Paint(ARect: TRect);
@@ -201,6 +205,8 @@ begin
 
   VeridianApp^.PushState;
   VeridianApp^.State.DrawEnabled := false;
+  if Assigned(AProperties^.Id) then
+    FontIdEntry^.SetText(StrPas(AProperties^.Id));
   FontFormatEntry^.SetSelectedIndex(ord(AProperties^.Format));
   MaxWidthEntry^.SetValue(AProperties^.MaxWidth);
   HeightEntry^.SetValue(AProperties^.Height);
