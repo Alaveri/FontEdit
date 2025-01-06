@@ -68,6 +68,7 @@ type
     constructor Create(AFont: PFont; const AID: string; AParent: PControl);
     destructor Free; virtual;
     function GetPixelAt(AX, AY: integer; var APos: TPoint): boolean;
+    function GetPixelAt(AX, AY: integer; var APos: TPoint): boolean;
     procedure Paint(ARect: TRect); virtual;
     procedure Init; virtual;
     procedure Layout; virtual;
