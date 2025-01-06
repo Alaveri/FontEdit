@@ -57,6 +57,7 @@ type
     function SaveFontAs(AWindow: PFontWindow): boolean;
     function SaveFont(AWindow: PFontWindow): boolean;
     function SaveAll: boolean;
+    function ConfirmSave(AWindow: PFontWindow): boolean;
     procedure Init; virtual;
     procedure InitActions; virtual;
     procedure InitControls; virtual;
@@ -65,8 +66,9 @@ type
     procedure NewFont;
     procedure OpenFont;
     procedure CloseWindow;
-    procedure CloseWindows;
+    procedure CloseAll;
     procedure ShowProperties;
+    procedure Undo;
     procedure UpdateActionControl(AControl: PActionControl); virtual;
   end;
 
@@ -80,8 +82,10 @@ uses
   Drawing,
   AplUtils,
   AplStr,
+  Events,
   Streams,
   Strings,
+  Lists,
   KeyDrv;
 
 procedure ApplicationError(var ASender; ACode: word); far;
@@ -106,6 +110,19 @@ begin
   inherited Free;
 end;
 
+procedure WindowClosing(var AEvent: TClosingEvent); far;
+var
+  window: PFontWindow;
+begin
+  window := PFontWindow(AEvent.Sender);
+  if not window^.Changed then
+    exit;
+  if not FontApplication^.ConfirmSave(window) then begin
+    AEvent.CanClose := false;
+    AEvent.Handled := true;
+  end;
+end;
+
 function TFontApplication.CreateFontWindow(AFont: PFont): PFontWindow;
 var
   window: PFontWindow;
@@ -118,6 +135,7 @@ begin
     Error(self, ecNotEnoughMemory);
     exit;
   end;
+  window^.OnClosing := @WindowClosing;
   CreateFontWindow := window;
 end;
 
@@ -260,48 +278,71 @@ begin
   end;
 end;
 
-procedure TFontApplication.CloseWindow;
+function TFontApplication.ConfirmSave(AWindow: PFontWindow): boolean;
 var
   dialog: TShowMessageDialog;
-  window: PFontWindow;
   result: TModalResult;
-  closeOk: boolean;
+begin
+  ConfirmSave := true;
+  if AWindow^.Changed then begin
+    dialog.Create('Save Changes', 'Save changes to font "' + AWindow^.CurrentFont^.GetId + '"?',
+      [mbYes, mbNo, mbCancel]);
+    result := dialog.ShowDialog;
+    if result = mrNo then
+      ConfirmSave := true
+    else if (result = mrYes) and SaveFont(nil) then
+      ConfirmSave := true
+    else
+      ConfirmSave := false;
+    dialog.Free;
+  end;
+end;
+
+procedure TFontApplication.CloseWindow;
+var
+  window: PFontWindow;
 begin
   if not (Assigned(ActiveWindow) and (ActiveWindow^.IsWindowType('FontWindow'))) then
     exit;
   window := PFontWindow(ActiveWindow);
-  closeOk := true;
-  if window^.Changed then begin
-    dialog.Create('Save Changes', 'Save changes to font "' + window^.CurrentFont^.GetId + '"?',
-       [mbYes, mbNo, mbCancel]);
-    result := dialog.ShowDialog;
-    if result = mrNo then
-      closeOk := true
-    else if (result = mrYes) and SaveFont(nil) then
-      closeOk := true
-    else
-      closeOk := false;
-    dialog.Free;
-  end;
-  if closeOk then
+  if ConfirmSave(window) then
     window^.Close(@self);
 end;
 
-procedure TFontApplication.CloseWindows;
+procedure TFontApplication.CloseAll;
 var
   index: integer;
   control: PControl;
   window: PFontWindow;
+  list: PControlList;
+  dialog: TSaveConfirmDialog;
 begin
-  if not SaveAll then
-    exit;
+  list := New(PControlList, Create(Desktop));
+  list^.DisposeObjects := false;
   for index := 0 to Desktop^.Controls^.Count - 1 do begin
     control := Desktop^.Controls^.GetItem(index);
     if not (control^.IsWindow and PWindow(control)^.IsWindowType('FontWindow')) then
       continue;
     window := PFontWindow(control);
-    window^.Close(@self);
+    if not window^.Changed then
+      window^.Close(@self)
+    else
+      list^.Add(window);
   end;
+  if list^.Count > 0 then begin
+    dialog.Create(list);
+    if dialog.Execute = mrOk then begin
+      for index := 0 to list^.Count - 1 do begin
+        window := PFontWindow(list^.GetItem(index));
+        if dialog.FileListView^.Checked(index) then begin
+          if not SaveFont(window) then
+            break;
+        end;
+        window^.Close(@self);
+      end;
+    end;
+  end;
+  FreeAndNil(list);
 end;
 
 function TFontApplication.SaveAll: boolean;
@@ -321,6 +362,19 @@ begin
       exit;
     end;
   end;
+end;
+
+procedure TFontApplication.Undo;
+var
+  dialog: TShowMessageDialog;
+  result: TModalResult;
+  str: string;
+begin
+  str := 'This is a test.'#10'This is a test of some system.'#10'This is only a test.'#13#10'Something else.'#13#10'blah'#10;
+    dialog.Create('Save Changes', str,
+      [mbYes, mbNo, mbCancel]);
+    result := dialog.ShowDialog;
+    dialog.Free;
 end;
 
 procedure TFontApplication.InitActions;
@@ -402,9 +456,9 @@ begin
     acSaveAs: SaveFontAs(nil);
     acSaveAll: SaveAll;
     acClose: CloseWindow;
-    acCloseAll: CloseWindows;
+    acCloseAll: CloseAll;
     acExit: Close;
-    acUndo: ;
+    acUndo: Undo;
     acRedo: ;
     acCut: ;
     acCopy: ;
@@ -422,6 +476,7 @@ var
   index: integer;
   control: PControl;
   anyChanged, anyWindows: boolean;
+  action: PAction;
 begin
   inherited UpdateActionControl(AControl);
   anyWindows := false;
@@ -441,19 +496,20 @@ begin
   isFontWindow := Assigned(ActiveWindow) and ActiveWindow^.IsWindowType('FontWindow');
   if isFontWindow then
     fontWindow := PFontWindow(activeWindow);
-  case AControl^.Action^.ActionId of
-    acSave: AControl^.Action^.Enabled := isFontWindow and fontWindow^.Changed;
-    acSaveAs: AControl^.Action^.Enabled := isFontWindow;
-    acSaveAll: AControl^.Action^.Enabled := anyChanged;
-    acClose: AControl^.Action^.Enabled := Assigned(ActiveWindow);
-    acCloseAll: AControl^.Action^.Enabled := anyWindows;
+  action := AControl^.Action;
+  case action^.ActionId of
+    acSave: action^.Enabled := isFontWindow and fontWindow^.Changed;
+    acSaveAs: action^.Enabled := isFontWindow;
+    acSaveAll: action^.Enabled := anyChanged;
+    acClose: action^.Enabled := Assigned(ActiveWindow);
+    acCloseAll: action^.Enabled := anyWindows;
     acUndo: ;
     acRedo: ;
     acCut: ;
     acCopy: ;
     acPaste: ;
     acDelete: ;
-    acFontProperties: AControl^.Action^.Enabled := isFontWindow;
+    acFontProperties: action^.Enabled := isFontWindow;
     acAbout: ;
   end;
 end;

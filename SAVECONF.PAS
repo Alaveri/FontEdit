@@ -11,6 +11,7 @@ uses
   Lists,
   Veridian,
   ListView,
+  Views,
   VeriType,
   Drawing,
   Dialogs;
@@ -22,78 +23,82 @@ type
   private
   public
     FileListView: PCheckListView;
-    FileList: TStringList;
-    IndexList: PLongIntList;
-    constructor Create(const AId, ATitle: string; AFileList: array of string);
-    function Execute(AIndexList: PLongIntList): TModalResult; virtual;
+    Windows: PControlList;
+    constructor Create(var AWindows: PControlList);
+    function Execute: TModalResult; virtual;
     procedure Init; virtual;
-    procedure LayoutRect(ARect: TRect); virtual;
+    procedure AfterShow; virtual;
+    procedure Layout; virtual;
     destructor Free; virtual;
   end;
 
 implementation
 
-constructor TSaveConfirmDialog.Create(const AId, ATitle: string; AFileList: array of string);
+uses
+  FontWind;
+
+constructor TSaveConfirmDialog.Create(var AWindows: PControlList);
 var
   index: integer;
 begin
-  FileList.Create;
-  for index := Low(AFileList) to High(AFileList) do
-    FileList.AddString(AFileList[index]);
-  inherited Create(AId, ATitle, [mbYes, mbNo, mbCancel]);
+  Windows := AWindows;
+  inherited Create('', 'Save Changes', [mbYes, mbNo, mbCancel]);
 end;
 
-function TSaveConfirmDialog.Execute(AIndexList: PLongIntList): TModalResult;
-var
-  index: integer;
-  result: TModalResult;
+function TSaveConfirmDialog.Execute: TModalResult;
 begin
-  VeridianApp^.PushState;
-  VeridianApp^.State.DrawEnabled := False;
-  IndexList := AIndexList;
-  IndexList^.Clear;
-  VeridianApp^.PopState;
-  result := ShowDialog;
-  if result = mrYes then begin
-    for index := 0 to FileListView^.Items^.Count - 1 do begin
-      if FileListView^.Checked(index) then
-        IndexList^.Add(index);
-    end;
-  end;
+  Execute := ShowDialog;
 end;
 
 procedure TSaveConfirmDialog.Init;
 var
   index: integer;
+  window: PFontWindow;
+  item: PCheckListItem;
 begin
   inherited Init;
+  VeridianApp^.DisableDrawing;
   FileListView := New(PCheckListView, CreateParent('FileListBox', @self));
   FileListView^.Padding.CreateValue(3);
-  for index := 0 to FileList.Count - 1 do
-    FileListView^.AddItemTag(FileList.GetString(index), index);
+  FileListView^.ScrollType := scAsNeeded;
+  ButtonAlign := haCenter;
+  for index := 0 to Windows^.Count - 1 do begin
+    window := PFontWindow(Windows^.GetItem(index));
+    item := FileListView^.AddItemValue(window^.CurrentFont^.GetId, window);
+    item^.SetChecked(true);
+  end;
+  FileListView^.SetSelectedIndex(0);
+  VeridianApp^.EnableDrawing;
+  Include(WindowOptions, woResizeable);
+  Width := 250;
+  Height := 150;
 end;
 
-procedure TSaveConfirmDialog.LayoutRect(ARect: TRect);
-var
-  buttonRect: TRect;
+procedure TSaveConfirmDialog.AfterShow;
 begin
-  inherited LayoutRect(ARect);
-  Width := 200;
-  Height := 400;
-  GetContentRect(ARect);
+  inherited AfterShow;
+  FileListView^.TabOrder := 0;
+  SetButtonTabOrders(1);
+end;
+
+procedure TSaveConfirmDialog.Layout;
+var
+  rect, buttonRect: TRect;
+begin
+  inherited Layout;
+  GetContentRect(rect);
   GetButtonArea(buttonRect);
   FileListView^.Position := rpParentContent;
   FileListView^.SetBounds(
     0,
     0,
-    ARect.Width,
-    ARect.Height - buttonRect.Height - Padding.Bottom
+    rect.Width,
+    rect.Height - buttonRect.Height - Padding.Bottom
   );
 end;
 
 destructor TSaveConfirmDialog.Free;
 begin
-  FileList.Free;
   inherited Free;
 end;
 

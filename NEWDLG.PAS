@@ -39,7 +39,7 @@ type
     function Execute(var AProperties: PFontProperties): TModalResult; virtual;
     function CanExecute(AActionId: word): boolean; virtual;
     procedure Init; virtual;
-    procedure LayoutRect(ARect: TRect); virtual;
+    procedure Layout; virtual;
     procedure Paint(ARect: TRect); virtual;
     procedure AfterShow; virtual;
   end;
@@ -120,22 +120,32 @@ begin
   VeridianApp^.PopState;
 end;
 
-procedure TNewFontDialog.LayoutRect(ARect: TRect);
+procedure TNewFontDialog.Layout;
 var
   xPos, yPos: integer;
-  entryHeight: integer;
-  numEntryX: integer;
+  entryWidth, entryHeight: integer;
+  numEntryX, offset: integer;
+  size: integer;
 begin
-  inherited LayoutRect(ARect);
+  inherited Layout;
   VeridianApp^.PushState;
   VeridianApp^.State.DrawEnabled := false;
   xPos := 0;
   yPos := 3;
   entryHeight := FontIdLabel^.Font^.Height + 6;
 
+  size := 55;
+  entryWidth := 100;
+  offset := 4;
+  if Graph^.Mode^.Width < 512 then begin
+    size := 35;
+    entryWidth := 75;
+    offset := 3;
+  end;
+
   FontIdLabel^.SetXY(xPos, yPos + 4);
-  Inc(xPos, FontIdLabel^.Width + 4);
-  FontIdEntry^.SetBounds(xPos, yPos, 100, entryHeight);
+  Inc(xPos, FontIdLabel^.Width + offset);
+  FontIdEntry^.SetBounds(xPos, yPos + 1, entryWidth, entryHeight);
   FontIdEntry^.ValidChars := AlphaNumericSpace;
   FontIdEntry^.MaxLength := 20;
   xPos := 0;
@@ -146,23 +156,27 @@ begin
   FontFormatEntry^.SetXY(FontIdEntry^.X, yPos);
   Inc(yPos, FontFormatEntry^.Height + 6);
 
-  MaxWidthLabel^.SetXY(xPos, yPos + 4);
-  Inc(xPos, MaxWidthLabel^.Width + 4);
+  MaxWidthLabel^.SetXY(xPos, yPos + offset);
+  Inc(xPos, MaxWidthLabel^.Width + offset);
   numEntryX := xPos;
-  MaxWidthEntry^.SetBounds(xPos, yPos, 55, entryHeight);
+  MaxWidthEntry^.SetBounds(xPos, yPos, size, entryHeight);
   xPos := 0;
   Inc(yPos, MaxWidthEntry^.Height + 6);
 
-  HeightLabel^.SetXY(xPos, yPos + 4);
-  HeightEntry^.SetBounds(numEntryX, yPos, 55, entryHeight);
+  HeightLabel^.SetXY(xPos, yPos + offset);
+  HeightEntry^.SetBounds(numEntryX, yPos, size, entryHeight);
   Inc(yPos, HeightEntry^.Height + 6);
 
-  SpacingLabel^.SetXY(xPos, yPos + 4);
-  SpacingEntry^.SetBounds(numEntryX, yPos, 55, entryHeight);
+  SpacingLabel^.SetXY(xPos, yPos + offset);
+  SpacingEntry^.SetBounds(numEntryX, yPos, size, entryHeight);
   Inc(yPos, SpacingEntry^.Height + 6);
 
   Width := 200;
   Height := 180;
+  if Graph^.Mode^.Width < 512 then begin
+    Width := 145;
+    Height := 120;
+  end;
   VeridianApp^.PopState;
 end;
 

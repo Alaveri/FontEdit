@@ -38,7 +38,7 @@ type
     procedure SetFilename(const AValue: string);
     procedure Init; virtual;
     procedure Initialized; virtual;
-    procedure LayoutRect(ARect: TRect); virtual;
+    procedure Layout; virtual;
     procedure DrawSampleChar(ALabel: PLabel; AFont: PFont; AChar: char);
     procedure UpdateTitle;
   end;
@@ -210,9 +210,9 @@ begin
   SampleLabel1 := New(PLabel, CreateCaption('SampleLabel1',
     'the quick brown fox jumps over the lazy dog.  ', @self));
   SampleLabel2 := New(PLabel, CreateCaption('SampleLabel2',
-    'THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG.  ', @self));
+    'THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG.   ', @self));
   SampleLabel3 := New(PLabel, CreateCaption('SampleLabel3',
-    '1234567890!@#$%^&*()-_=+;:''",<.>/?`~{[]}\|  ', @self));
+    '1234567890!@#$%^&*()-_=+;:''",<.>/?`~{[]}\|   ', @self));
 
   SampleLabel1^.TransparentBack := false;
   SampleLabel2^.TransparentBack := false;
@@ -224,7 +224,7 @@ begin
   inherited Initialized;
 end;
 
-procedure TFontWindow.LayoutRect(ARect: TRect);
+procedure TFontWindow.Layout;
 var
   yPos: integer;
   rect: TRect;
@@ -263,7 +263,7 @@ begin
 
   SampleLabel3^.X := Grid^.X;
   SampleLabel3^.Y := yPos;
-  inherited LayoutRect(ARect);
+  inherited Layout;
 end;
 
 function TFontWindow.WindowType: string;

@@ -50,7 +50,7 @@ type
     constructor Create(AFont: PFont; const AID: string; AParent: PControl);
     procedure DrawChar(ARect: TRect; ACH: char; AClear: boolean);
     procedure MouseDown(var AEvent: TMouseEvent); virtual;
-    procedure LayoutRect(ARect: TRect); virtual;
+    procedure Layout; virtual;
     procedure Init; virtual;
     procedure Paint(ARect: TRect); virtual;
     destructor Free; virtual;
@@ -70,7 +70,7 @@ type
     function GetPixelAt(AX, AY: integer; var APos: TPoint): boolean;
     procedure Paint(ARect: TRect); virtual;
     procedure Init; virtual;
-    procedure LayoutRect(ARect: TRect); virtual;
+    procedure Layout; virtual;
     procedure SetCurrentChar(AChar: char);
     procedure MouseDown(var AEvent: TMouseEvent); virtual;
     procedure MouseMove(var AEvent: TMouseEvent); virtual;
@@ -134,11 +134,11 @@ begin
   CurrentFont := AFont;
 end;
 
-procedure TFontGrid.LayoutRect(ARect: TRect);
+procedure TFontGrid.Layout;
 var
   rows: integer;
 begin
-  inherited LayoutRect(ARect);
+  inherited Layout;
   Width := CharsPerRow * (CurrentFont^.MaxWidth + 1) + 2 * BorderWidth;
   rows := 256 div CharsPerRow;
   if 256 mod CharsPerRow > 0 then
@@ -322,9 +322,9 @@ begin
   FButton := bsLeft;
 end;
 
-procedure TFontEditor.LayoutRect(ARect: TRect);
+procedure TFontEditor.Layout;
 begin
-  inherited LayoutRect(ARect);
+  inherited Layout;
   Width := CurrentFont^.MaxWidth * Scale + 2 * BorderWidth;
   Height := CurrentFont^.Height * Scale + 2 * BorderWidth;
 end;
