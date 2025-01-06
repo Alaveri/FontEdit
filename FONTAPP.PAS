@@ -80,7 +80,6 @@ implementation
 uses
   Dialogs,
   Drawing,
-  Drawing,
   AplUtils,
   AplStr,
   Events,
@@ -263,22 +262,6 @@ begin
   dialog.Free;
 end;
 
-function TFontApplication.SaveFont(AWindow: PFontWindow): boolean;
-begin
-  SaveFont := false;
-  if not Assigned(AWindow) then
-    AWindow := PFontWindow(ActiveWindow);
-  if not Assigned(AWindow^.Filename) then
-    SaveFont := SaveFontAs(AWindow)
-  else begin
-    AWindow^.CurrentFont^.SaveToFile(AWindow^.GetFilename);
-    AWindow^.SetTitle(AWindow^.WindowTitle);
-    SaveFont := true;
-    AWindow^.Changed := false;
-    AWindow^.UpdateTitle;
-  end;
-end;
-
 function TFontApplication.ConfirmSave(AWindow: PFontWindow): boolean;
 var
   dialog: TShowMessageDialog;
@@ -297,17 +280,6 @@ begin
       ConfirmSave := false;
     dialog.Free;
   end;
-end;
-
-procedure TFontApplication.CloseWindow;
-var
-  window: PFontWindow;
-begin
-  if not (Assigned(ActiveWindow) and (ActiveWindow^.IsWindowType('FontWindow'))) then
-    exit;
-  window := PFontWindow(ActiveWindow);
-  if ConfirmSave(window) then
-    window^.Close(@self);
 end;
 
 procedure TFontApplication.CloseAll;
@@ -419,42 +391,6 @@ begin
   end;
   if closeOk then
     window^.Close(@self);
-end;
-
-procedure TFontApplication.CloseWindows;
-var
-  index: integer;
-  control: PControl;
-  window: PFontWindow;
-begin
-  if not SaveAll then
-    exit;
-  for index := 0 to Desktop^.Controls^.Count - 1 do begin
-    control := Desktop^.Controls^.GetItem(index);
-    if not (control^.IsWindow and PWindow(control)^.IsWindowType('FontWindow')) then
-      continue;
-    window := PFontWindow(control);
-    window^.Close(@self);
-  end;
-end;
-
-function TFontApplication.SaveAll: boolean;
-var
-  index: integer;
-  control: PControl;
-  window: PFontWindow;
-begin
-  SaveAll := true;
-  for index := 0 to Desktop^.Controls^.Count - 1 do begin
-    control := Desktop^.Controls^.GetItem(index);
-    if not (control^.IsWindow and PWindow(control)^.IsWindowType('FontWindow')) then
-      continue;
-    window := PFontWindow(control);
-    if not SaveFont(window) then begin
-      SaveAll := false;
-      exit;
-    end;
-  end;
 end;
 
 procedure TFontApplication.InitActions;
