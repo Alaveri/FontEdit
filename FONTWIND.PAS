@@ -7,6 +7,7 @@ uses
   AplObj,
   AplTypes,
   AplConst,
+  VeriType,
   Controls,
   Drawing,
   Graphics,
@@ -28,6 +29,7 @@ type
     SampleLabel1: PLabel;
     SampleLabel2: PLabel;
     SampleLabel3: PLabel;
+    SampleLabel4: PLabel;
     Changed: boolean;
     Filename: PChar;
     constructor Create(const AId, ATitle: string; AFont: PFont);
@@ -49,6 +51,7 @@ uses
   AplUtils,
   AplStr,
   Veridian,
+  Palettes,
   FontApp;
 
 procedure FontGridSelectChar(var AEvent: TFontGridEvent); far;
@@ -193,7 +196,7 @@ procedure TFontWindow.Init;
 begin
   Inherited Init;
   InitialLocation := wpDefault;
-  Width := ScaleX(60);
+  Width := ScaleX(80);
   Height := ScaleY(80);
   ScrollType := scAsNeeded;
   Changed := false;
@@ -213,10 +216,17 @@ begin
     'THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG.   ', @self));
   SampleLabel3 := New(PLabel, CreateCaption('SampleLabel3',
     '1234567890!@#$%^&*()-_=+;:''",<.>/?`~{[]}\|   ', @self));
-
+  SampleLabel4 := New(PLabel, CreateCaption('SampleLabel4',
+    'This is a test. '
+    + 'This is a test of the emergency broadcast system. '
+    + 'Had this been an actual emergency, the attention signal you just heard '
+    + 'would have been followed by official information or instructions. '
+    + 'This is only a test.', @self));
   SampleLabel1^.TransparentBack := false;
   SampleLabel2^.TransparentBack := false;
   SampleLabel3^.TransparentBack := false;
+  SampleLabel4^.TransparentBack := false;
+  SampleLabel4^.Wrap := true;
 end;
 
 procedure TFontWindow.Initialized;
@@ -250,6 +260,8 @@ begin
   SampleLabel2^.Font := CurrentFont;
   SampleLabel3^.Layout;
   SampleLabel3^.Font := CurrentFont;
+  SampleLabel4^.Layout;
+  SampleLabel4^.Font := CurrentFont;
 
   yPos := Grid^.Y + Grid^.Height + 8;
 
@@ -263,6 +275,16 @@ begin
 
   SampleLabel3^.X := Grid^.X;
   SampleLabel3^.Y := yPos;
+
+  GetContentScreenRect(rect);
+  SampleLabel4^.X := Grid^.X + Grid^.Width + 20 + FontEditor^.Width + 10;
+  SampleLabel4^.Y := Grid^.Y;
+  SampleLabel4^.Width := 200;
+  SampleLabel4^.Height := Grid^.Height;
+  SampleLabel4^.BackColor := egaCyan;
+  SampleLabel4^.AutoSize := false;
+  SampleLabel4^.HorzAlign := haLeft;
+
   inherited Layout;
 end;
 
