@@ -15,6 +15,7 @@ uses
   Drawing,
   ListView,
   Graphics,
+  GrCanvas,
   Veridian,
   VeriCons,
   VeriType,
@@ -40,7 +41,7 @@ type
     function CanExecute(AActionId: word): boolean; virtual;
     procedure Init; virtual;
     procedure Layout; virtual;
-    procedure Paint(ARect: TRect); virtual;
+    procedure Paint(ARect: TRect; var ACanvas: TCanvas); virtual;
     procedure AfterShow; virtual;
   end;
 
@@ -180,9 +181,9 @@ begin
   VeridianApp^.PopState;
 end;
 
-procedure TNewFontDialog.Paint(ARect: TRect);
+procedure TNewFontDialog.Paint(ARect: TRect; var ACanvas: TCanvas);
 begin
-  inherited Paint(ARect);
+  inherited Paint(ARect, ACanvas);
 end;
 
 procedure TNewFontDialog.AfterShow;

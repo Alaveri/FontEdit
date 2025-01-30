@@ -8,6 +8,7 @@ uses
   AplTypes,
   Controls,
   Graphics,
+  GrCanvas,
   AplMath,
   VeriType,
   Drawing,
@@ -52,7 +53,7 @@ type
     procedure MouseDown(var AEvent: TMouseEvent); virtual;
     procedure Layout; virtual;
     procedure Init; virtual;
-    procedure Paint(ARect: TRect); virtual;
+    procedure Paint(ARect: TRect; var ACanvas: TCanvas); virtual;
     destructor Free; virtual;
   end;
 
@@ -68,7 +69,7 @@ type
     constructor Create(AFont: PFont; const AID: string; AParent: PControl);
     destructor Free; virtual;
     function GetPixelAt(AX, AY: integer; var APos: TPoint): boolean;
-    procedure Paint(ARect: TRect); virtual;
+    procedure Paint(ARect: TRect; var ACanvas: TCanvas); virtual;
     procedure Init; virtual;
     procedure Layout; virtual;
     procedure SetCurrentChar(AChar: char);
@@ -181,14 +182,14 @@ begin
     Graph^.DrawText(ARect.X + cx, ARect.Y + cy, ACH);
 end;
 
-procedure TFontGrid.Paint(ARect: TRect);
+procedure TFontGrid.Paint(ARect: TRect; var ACanvas: TCanvas);
 var
   ch: char;
   cy, lineIndex, index: integer;
   line: string;
   drawRect: TRect;
 begin
-  inherited Paint(ARect);
+  inherited Paint(ARect, ACanvas);
   if CurrentFont = nil then
     exit;
   GetDrawRect(drawRect);
@@ -289,11 +290,11 @@ begin
   Graph^.FillRect(rect);
 end;
 
-procedure TFontEditor.Paint(ARect: TRect);
+procedure TFontEditor.Paint(ARect: TRect; var ACanvas: TCanvas);
 var
   xIndex, yIndex: integer;
 begin
-  inherited Paint(ARect);
+  inherited Paint(ARect, ACanvas);
   if CurrentFont = nil then
     exit;
   if not IsVisible then
