@@ -84,7 +84,7 @@ begin
   VeridianApp^.PushState;
   VeridianApp^.State.DrawEnabled := false;
   InitialLocation := wpScreenCenter;
-  Exclude(WindowOptions, woResizeable);
+  Exclude(WindowOptions, woResizable);
 
   FontIdLabel := New(PLabel, CreateCaption('FontIdLabel', 'Font Id: ', @self));
   FontIdEntry := New(PEdit, CreateParent('FontIdEntry', @self));

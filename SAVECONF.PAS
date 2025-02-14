@@ -69,7 +69,7 @@ begin
   end;
   FileListView^.SetSelectedIndex(0);
   VeridianApp^.EnableDrawing;
-  Include(WindowOptions, woResizeable);
+  Include(WindowOptions, woResizable);
   Width := 250;
   Height := 150;
 end;
