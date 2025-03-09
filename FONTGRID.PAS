@@ -407,7 +407,7 @@ begin
   event.OldCharWidth := currentFont^.CharWidth(CurrentChar);
   rect.CreateDims(0, 0, CurrentFont^.MaxWidth, CurrentFont^.Height);
   BeginDrawing;
-  LineDraw(FPreviousPixel.X, FPreviousPixel.Y, pos.X, pos.Y,
+  LineDraw(@self, FPreviousPixel.X, FPreviousPixel.Y, pos.X, pos.Y,
     rect, @DoSetPixel, @self);
   EndDrawing;
   currentFont^.SetCharWidths;

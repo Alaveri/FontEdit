@@ -5,6 +5,7 @@ interface
 
 uses
   AplObj,
+  AplIo,
   AplTypes,
   Streams,
   Graphics;
@@ -32,7 +33,7 @@ type
     LastOpenDir: PChar;
     LastSaveDir: PChar;
     procedure LoadFromStream(AStream: PStream); virtual;
-    procedure SaveToStream(AStream: PStream); virtual;
+    function SaveToStream(AStream: PStream): longint; virtual;
     destructor Free; virtual;
     procedure Init; virtual;
     procedure Assign(var ASource: TObject); virtual;
@@ -124,7 +125,7 @@ begin
   LastSaveDir := AStream^.ReadPChar;
 end;
 
-procedure TFontAppSettings.SaveToStream(AStream: PStream);
+function TFontAppSettings.SaveToStream(AStream: PStream): longint;
 begin
   AStream^.WritePChar(LastOpenDir);
   AStream^.WritePChar(LastSaveDir);
